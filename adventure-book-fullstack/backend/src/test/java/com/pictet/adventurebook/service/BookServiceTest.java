@@ -168,8 +168,8 @@ class BookServiceTest {
     @Test
     void updateEndsGamesStillInProgressOnTheBook() {
         Book existing = playableBook("Being Revised");
-        GameSession playing = GameSession.start(existing);
-        GameSession finished = GameSession.start(existing);
+        GameSession playing = GameSession.start(existing, "test-player");
+        GameSession finished = GameSession.start(existing, "test-player");
         finished.choose(0); // walks into the END section, so this one is FINISHED
 
         when(bookRepository.findWithSectionsById(1L)).thenReturn(Optional.of(existing));

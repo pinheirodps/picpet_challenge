@@ -155,7 +155,8 @@ class BookCreationIntegrationTest {
     void deletingABookRemovesItAndTheGamesPlayedOnIt() {
         Book saved = bookService.create(twoSectionBook("To be removed"));
         Long bookId = saved.getId();
-        gameSessionRepository.save(GameSession.start(bookRepository.findWithSectionsById(bookId).orElseThrow()));
+        Book playable = bookRepository.findWithSectionsById(bookId).orElseThrow();
+        gameSessionRepository.save(GameSession.start(playable, "test-player"));
 
         assertThat(gameSessionRepository.findByBookId(bookId)).hasSize(1);
 

@@ -43,12 +43,12 @@ public class GameService {
      * <p>Deliberately playing a book twice at once is still possible — stop the first game and
      * start again. That's the rarer intent, so it's the one that takes the extra step.
      */
-    public GameSession startGame(Long bookId) {
-        return gameSessionRepository.findLatestByBookIdAndStatus(bookId, GameStatus.PLAYING)
+    public GameSession startGame(Long bookId, String playerId) {
+        return gameSessionRepository.findResumableOnBook(bookId, playerId, GameStatus.PLAYING)
                 .map(this::withOptionsLoaded)
                 .orElseGet(() -> {
                     Book book = bookService.loadPlayableBook(bookId);
-                    return gameSessionRepository.save(GameSession.start(book));
+                    return gameSessionRepository.save(GameSession.start(book, playerId));
                 });
     }
 
@@ -70,10 +70,16 @@ public class GameService {
         return loadSession(gameId);
     }
 
-    /** Lists every in-progress game, most recently played first, for the "resume" list. */
+    /**
+     * This reader's in-progress games, most recently played first, for the "resume" list.
+     *
+     * <p>Scoped by {@code playerId} so one reader's list doesn't show — and let them take
+     * over — another's game. See {@link GameSession#getPlayerId()} for what that id is and,
+     * importantly, what it isn't.
+     */
     @Transactional(readOnly = true)
-    public List<GameSession> listSavedGames() {
-        return gameSessionRepository.findByStatusOrderByUpdatedAtDesc(GameStatus.PLAYING);
+    public List<GameSession> listSavedGames(String playerId) {
+        return gameSessionRepository.findResumableFor(playerId, GameStatus.PLAYING);
     }
 
     /**

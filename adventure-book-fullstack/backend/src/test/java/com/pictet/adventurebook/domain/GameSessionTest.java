@@ -16,7 +16,7 @@ class GameSessionTest {
                 section(2, SectionType.END)
         );
 
-        GameSession session = GameSession.start(book);
+        GameSession session = GameSession.start(book, "test-player");
 
         assertThat(session.getCurrentSectionNumber()).isEqualTo(1);
         assertThat(session.getHealth()).isEqualTo(GameSession.STARTING_HEALTH);
@@ -27,7 +27,7 @@ class GameSessionTest {
     void startRejectsABookWithoutExactlyOneBeginning() {
         Book book = book(section(1, SectionType.NODE, optionTo(1)));
 
-        assertThatThrownBy(() -> GameSession.start(book))
+        assertThatThrownBy(() -> GameSession.start(book, "test-player"))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -38,7 +38,7 @@ class GameSessionTest {
                 section(2, SectionType.NODE, optionTo(3)),
                 section(3, SectionType.END)
         );
-        GameSession session = GameSession.start(book);
+        GameSession session = GameSession.start(book, "test-player");
 
         session.choose(0);
 
@@ -53,7 +53,7 @@ class GameSessionTest {
                 section(1, SectionType.BEGIN, optionTo(2)),
                 section(2, SectionType.END)
         );
-        GameSession session = GameSession.start(book);
+        GameSession session = GameSession.start(book, "test-player");
 
         session.choose(0);
 
@@ -66,7 +66,7 @@ class GameSessionTest {
                 section(1, SectionType.BEGIN, optionWithConsequence(2, ConsequenceType.LOSE_HEALTH, 4)),
                 section(2, SectionType.END)
         );
-        GameSession session = GameSession.start(book);
+        GameSession session = GameSession.start(book, "test-player");
 
         session.choose(0);
 
@@ -79,7 +79,7 @@ class GameSessionTest {
                 section(1, SectionType.BEGIN, optionWithConsequence(2, ConsequenceType.GAIN_HEALTH, 5)),
                 section(2, SectionType.END)
         );
-        GameSession session = GameSession.start(book);
+        GameSession session = GameSession.start(book, "test-player");
 
         session.choose(0);
 
@@ -93,7 +93,7 @@ class GameSessionTest {
                 section(2, SectionType.NODE, optionTo(3)),
                 section(3, SectionType.END)
         );
-        GameSession session = GameSession.start(book);
+        GameSession session = GameSession.start(book, "test-player");
 
         session.choose(0);
 
@@ -110,7 +110,7 @@ class GameSessionTest {
                 section(1, SectionType.BEGIN, optionWithConsequence(2, ConsequenceType.LOSE_HEALTH, 10)),
                 section(2, SectionType.END)
         );
-        GameSession session = GameSession.start(book);
+        GameSession session = GameSession.start(book, "test-player");
 
         session.choose(0);
 
@@ -124,7 +124,7 @@ class GameSessionTest {
                 section(2, SectionType.NODE, optionTo(3)),
                 section(3, SectionType.END)
         );
-        GameSession session = GameSession.start(book);
+        GameSession session = GameSession.start(book, "test-player");
         assertThat(session.getLastConsequence()).isNull();
 
         session.choose(0);
@@ -141,7 +141,7 @@ class GameSessionTest {
                 section(2, SectionType.NODE, optionTo(3)),
                 section(3, SectionType.END)
         );
-        GameSession session = GameSession.start(book);
+        GameSession session = GameSession.start(book, "test-player");
         session.choose(0);
 
         session.choose(0);
@@ -155,7 +155,7 @@ class GameSessionTest {
                 section(1, SectionType.BEGIN, optionTo(2)),
                 section(2, SectionType.END)
         );
-        GameSession session = GameSession.start(book);
+        GameSession session = GameSession.start(book, "test-player");
 
         session.abandon();
 
@@ -169,7 +169,7 @@ class GameSessionTest {
                 section(1, SectionType.BEGIN, optionTo(2)),
                 section(2, SectionType.END)
         );
-        GameSession session = GameSession.start(book);
+        GameSession session = GameSession.start(book, "test-player");
         session.choose(0);
 
         assertThatThrownBy(session::abandon).isInstanceOf(IllegalStateException.class);
@@ -181,7 +181,7 @@ class GameSessionTest {
                 section(1, SectionType.BEGIN, optionTo(2)),
                 section(2, SectionType.END)
         );
-        GameSession session = GameSession.start(book);
+        GameSession session = GameSession.start(book, "test-player");
         session.choose(0);
 
         assertThatThrownBy(() -> session.choose(0))
@@ -194,7 +194,7 @@ class GameSessionTest {
                 section(1, SectionType.BEGIN, optionTo(2)),
                 section(2, SectionType.END)
         );
-        GameSession session = GameSession.start(book);
+        GameSession session = GameSession.start(book, "test-player");
 
         assertThatThrownBy(() -> session.choose(5))
                 .isInstanceOf(IndexOutOfBoundsException.class);

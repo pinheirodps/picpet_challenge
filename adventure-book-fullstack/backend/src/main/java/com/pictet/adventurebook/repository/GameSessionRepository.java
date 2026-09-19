@@ -22,10 +22,11 @@ import java.util.Optional;
  *       collection joins in a single query would produce a cross product (see {@link
  *       com.pictet.adventurebook.repository.BookRepository}'s javadoc for why), so this
  *       repository never does that.</li>
- *   <li>{@link #findByStatusOrderByUpdatedAtDesc} backs the "resume a saved game" list
- *       (Objective 4) and only needs the book's title, so it fetch-joins just {@code book},
- *       not {@code sections} — the lightest query that still avoids N+1 on {@code
- *       session.getBook().getTitle()} for every row.</li>
+ *   <li>{@link #findResumableFor} backs the "resume a saved game" list (Objective 4) and only
+ *       needs the book's title, so it fetch-joins just {@code book}, not {@code sections} —
+ *       the lightest query that still avoids N+1 on {@code session.getBook().getTitle()} for
+ *       every row. It filters by {@code playerId} so one reader's list doesn't show another's
+ *       games.</li>
  * </ul>
  */
 public interface GameSessionRepository extends JpaRepository<GameSession, Long> {
@@ -35,8 +36,10 @@ public interface GameSessionRepository extends JpaRepository<GameSession, Long> 
             + "where gs.id = :id")
     Optional<GameSession> findWithBookAndSectionsById(@Param("id") Long id);
 
-    @Query("select gs from GameSession gs join fetch gs.book where gs.status = :status order by gs.updatedAt desc")
-    List<GameSession> findByStatusOrderByUpdatedAtDesc(@Param("status") GameStatus status);
+    @Query("select gs from GameSession gs join fetch gs.book "
+            + "where gs.status = :status and gs.playerId = :playerId order by gs.updatedAt desc")
+    List<GameSession> findResumableFor(@Param("playerId") String playerId,
+                                       @Param("status") GameStatus status);
 
     /**
      * How many games are still in progress on a book. Used to warn the reader before they
@@ -46,8 +49,12 @@ public interface GameSessionRepository extends JpaRepository<GameSession, Long> 
     long countByBookIdAndStatus(Long bookId, GameStatus status);
 
     /**
-     * The most recent game still in progress on a book, if there is one — what "start a game"
-     * resumes instead of creating a second session on the same book.
+     * This reader's most recent game still in progress on a book, if there is one — what
+     * "start a game" resumes instead of creating a second session on the same book.
+     *
+     * <p>Scoped to the player as well as the book: without that, pressing "begin" would hand
+     * the reader somebody else's game in progress, which is worse than the duplicate it was
+     * meant to prevent.
      *
      * <p>Fetches the book and its sections, because the caller goes straight on to read the
      * session's current section. Options are loaded separately, for the cross-product reason
@@ -55,10 +62,11 @@ public interface GameSessionRepository extends JpaRepository<GameSession, Long> 
      */
     @Query("select gs from GameSession gs "
             + "join fetch gs.book b left join fetch b.sections "
-            + "where b.id = :bookId and gs.status = :status "
+            + "where b.id = :bookId and gs.playerId = :playerId and gs.status = :status "
             + "order by gs.updatedAt desc limit 1")
-    Optional<GameSession> findLatestByBookIdAndStatus(@Param("bookId") Long bookId,
-                                                      @Param("status") GameStatus status);
+    Optional<GameSession> findResumableOnBook(@Param("bookId") Long bookId,
+                                              @Param("playerId") String playerId,
+                                              @Param("status") GameStatus status);
 
     /**
      * Every session belonging to a book, whatever its status — the sessions that have to be

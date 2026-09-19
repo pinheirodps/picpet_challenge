@@ -285,18 +285,17 @@ que quebre um cenário faz falhar aquele build.
 
 ## Limitações — dizer antes de perguntarem
 
-**Sem autenticação, portanto não existe noção de "os meus jogos".** Duas pessoas podem jogar
-ao mesmo tempo sem interferir — cada jogo é a sua própria linha e o backend não guarda estado
-entre pedidos, o que foi verificado. Mas o `GET /api/games` devolve os jogos em curso de toda
-a gente, portanto a lista "Continue Playing" de uma pessoa mostra o jogo de outra e retomá-lo
-rouba-o. O `/admin` está igualmente aberto a qualquer pessoa.
+**Os leitores estão separados, mas não autenticados.** Cada jogo pertence a um `playerId` que
+o browser gera e guarda em `localStorage`, enviado no header `X-Player-Id`. O
+`GET /api/games` filtra por ele, portanto cada pessoa vê apenas os seus jogos.
 
-Deliberadamente não resolvido pela metade. A correção mínima honesta é uma coluna `playerId`
-preenchida a partir de um id gerado no browser — separa jogadores sem os autenticar. Contas a
-sério é o que o `/admin` precisaria.
+O que isso **não** é: qualquer pessoa pode enviar qualquer id, não há proteção nenhuma. O
+mesmo utilizador noutro dispositivo é outro jogador. E o `/admin` continua aberto a quem lá
+chegar.
 
-**Sem optimistic locking no `GameSession`.** Duas escolhas simultâneas no mesmo jogo podiam
-sobrepor-se. Uma coluna `@Version` é a correção.
+> **A frase a usar:** "isto separa leitores, não os autentica". Separar resolve um bug que se
+> nota no primeiro minuto; autenticar é outra conversa, e seria o passo seguinte — trocar o id
+> do browser por um emitido no login, o que muda pouco no resto do código.
 
 **`ddl-auto: update`.** Aceitável quando o esquema vem das entidades e os dados são
 recarregáveis; um deployment real usaria Flyway ou Liquibase.

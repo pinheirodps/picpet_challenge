@@ -17,12 +17,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -50,8 +54,8 @@ class GameControllerTest {
 
     @Test
     void startGameReturnsTheInitialState() throws Exception {
-        GameSession session = GameSession.start(book());
-        when(gameService.startGame(1L)).thenReturn(session);
+        GameSession session = GameSession.start(book(), "test-player");
+        when(gameService.startGame(eq(1L), anyString())).thenReturn(session);
 
         mockMvc.perform(post("/api/games")
                         .contentType("application/json")
@@ -74,7 +78,7 @@ class GameControllerTest {
 
     @Test
     void chooseReturnsUpdatedStateAfterWinning() throws Exception {
-        GameSession session = GameSession.start(book());
+        GameSession session = GameSession.start(book(), "test-player");
         session.choose(0);
         when(gameService.choose(anyLong(), anyInt())).thenReturn(session);
 
@@ -98,8 +102,8 @@ class GameControllerTest {
 
     @Test
     void listSavedGamesReturnsInProgressSessionsAsSummaries() throws Exception {
-        GameSession session = GameSession.start(book());
-        when(gameService.listSavedGames()).thenReturn(List.of(session));
+        GameSession session = GameSession.start(book(), "test-player");
+        when(gameService.listSavedGames(anyString())).thenReturn(List.of(session));
 
         mockMvc.perform(get("/api/games"))
                 .andExpect(status().isOk())
@@ -131,7 +135,7 @@ class GameControllerTest {
                 new Section(2, "A glittering chamber", SectionType.NODE, List.of(new Option("Look", 3, null))),
                 new Section(3, "The way out", SectionType.END, List.of())
         ));
-        GameSession session = GameSession.start(book);
+        GameSession session = GameSession.start(book, "test-player");
         session.choose(0);
         when(gameService.choose(anyLong(), anyInt())).thenReturn(session);
 
@@ -147,7 +151,7 @@ class GameControllerTest {
 
     @Test
     void stoppingAGameReturnsItsFinalState() throws Exception {
-        GameSession session = GameSession.start(book());
+        GameSession session = GameSession.start(book(), "test-player");
         session.abandon();
         when(gameService.abandon(1L)).thenReturn(session);
 
@@ -155,6 +159,56 @@ class GameControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ABANDONED"))
                 .andExpect(jsonPath("$.options").isEmpty());
+    }
+
+    // The player id separates readers' saved games. It is passed through as sent, and callers
+    // that don't send one share a single "anonymous" bucket rather than being rejected.
+    @Test
+    void thePlayerIdHeaderIsPassedThroughWhenListingSavedGames() throws Exception {
+        when(gameService.listSavedGames("reader-a")).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/games").header("X-Player-Id", "reader-a"))
+                .andExpect(status().isOk());
+
+        verify(gameService).listSavedGames("reader-a");
+    }
+
+    @Test
+    void aCallerWithoutAPlayerIdFallsBackToAnonymous() throws Exception {
+        when(gameService.listSavedGames("anonymous")).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/games"))
+                .andExpect(status().isOk());
+
+        verify(gameService).listSavedGames("anonymous");
+    }
+
+    @Test
+    void startingAGamePassesThePlayerIdAlong() throws Exception {
+        when(gameService.startGame(eq(1L), eq("reader-a"))).thenReturn(GameSession.start(book(), "reader-a"));
+
+        mockMvc.perform(post("/api/games")
+                        .header("X-Player-Id", "reader-a")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(new StartGameRequest(1L))))
+                .andExpect(status().isCreated());
+
+        verify(gameService).startGame(1L, "reader-a");
+    }
+
+    // Two choices racing on one game: the loser gets a 409 telling it to reload, not a 500
+    // implying the server broke.
+    @Test
+    void aConcurrentChangeReturns409() throws Exception {
+        when(gameService.choose(anyLong(), anyInt()))
+                .thenThrow(new ObjectOptimisticLockingFailureException(GameSession.class, 1L));
+
+        mockMvc.perform(post("/api/games/1/choices")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(new ChooseOptionRequest(0))))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.messages[0]").value("This game was changed somewhere else. Reload it and try again."));
     }
 
     @Test

@@ -31,16 +31,45 @@ class GameSessionRepositoryIntegrationTest {
     void onlyReturnsSessionsStillInProgress() {
         Book book = bookRepository.save(sampleBook());
 
-        GameSession playing = GameSession.start(book);
-        GameSession won = GameSession.start(book);
-        won.choose(0);
+        GameSession playing = GameSession.start(book, "test-player");
+        GameSession finished = GameSession.start(book, "test-player");
+        finished.choose(0);
 
         gameSessionRepository.save(playing);
-        gameSessionRepository.save(won);
+        gameSessionRepository.save(finished);
 
-        List<GameSession> saved = gameSessionRepository.findByStatusOrderByUpdatedAtDesc(GameStatus.PLAYING);
+        List<GameSession> saved = gameSessionRepository.findResumableFor("test-player", GameStatus.PLAYING);
 
         assertThat(saved).extracting(GameSession::getId).containsExactly(playing.getId());
+    }
+
+    // The point of the playerId column: one reader's resume list must not show another's
+    // games, which is what happened before it existed.
+    @Test
+    void onlyReturnsThisPlayersSessions() {
+        Book book = bookRepository.save(sampleBook());
+
+        GameSession mine = gameSessionRepository.save(GameSession.start(book, "reader-a"));
+        gameSessionRepository.save(GameSession.start(book, "reader-b"));
+
+        List<GameSession> saved = gameSessionRepository.findResumableFor("reader-a", GameStatus.PLAYING);
+
+        assertThat(saved).extracting(GameSession::getId).containsExactly(mine.getId());
+    }
+
+    @Test
+    void findsThisPlayersGameOnABookButNotSomebodyElses() {
+        Book book = bookRepository.save(sampleBook());
+        gameSessionRepository.save(GameSession.start(book, "reader-b"));
+
+        assertThat(gameSessionRepository.findResumableOnBook(book.getId(), "reader-a", GameStatus.PLAYING))
+                .isEmpty();
+
+        GameSession mine = gameSessionRepository.save(GameSession.start(book, "reader-a"));
+
+        assertThat(gameSessionRepository.findResumableOnBook(book.getId(), "reader-a", GameStatus.PLAYING))
+                .map(GameSession::getId)
+                .contains(mine.getId());
     }
 
     private Book sampleBook() {

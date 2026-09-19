@@ -1,8 +1,10 @@
 package com.pictet.adventurebook.exception;
 
 import com.pictet.adventurebook.web.dto.ErrorResponse;
+import jakarta.persistence.OptimisticLockException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -26,6 +28,22 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleNotFound(RuntimeException ex) {
         ErrorResponse body = ErrorResponse.of(HttpStatus.NOT_FOUND.value(), "Not Found", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+    }
+
+    /**
+     * Two writes to the same game raced, and this one lost — the version it loaded is no
+     * longer the version stored. A 409 rather than a 500: nothing is broken, the caller's
+     * copy is simply stale, and re-reading the game then choosing again succeeds.
+     *
+     * <p>Spring wraps JPA's {@code OptimisticLockException} in its own
+     * {@link ObjectOptimisticLockingFailureException}, so that is what arrives here.
+     */
+    @ExceptionHandler({ObjectOptimisticLockingFailureException.class, OptimisticLockException.class})
+    public ResponseEntity<ErrorResponse> handleConcurrentChange(Exception ex) {
+        log.debug("Rejected a concurrent change to a game session", ex);
+        ErrorResponse body = ErrorResponse.of(HttpStatus.CONFLICT.value(), "Conflict",
+                "This game was changed somewhere else. Reload it and try again.");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
     @ExceptionHandler(IllegalStateException.class)

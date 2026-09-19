@@ -10,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Version;
 import lombok.Getter;
 
 import java.time.Instant;
@@ -37,6 +38,25 @@ public class GameSession {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * Optimistic lock. Every choice is a read-modify-write, so two of them landing at once —
+     * the same game open in two tabs, or a double-clicked option — would otherwise both read
+     * health 10, both subtract, and the second write would silently overwrite the first. One
+     * of the two choices would vanish, and the player would end up with more health than
+     * their choices earned them.
+     *
+     * <p>With this column, the second write fails instead of winning. Hibernate compares the
+     * version it loaded against the one in the database, and raises {@link
+     * jakarta.persistence.OptimisticLockException} when they differ — which the API turns
+     * into a 409, telling the caller to re-read and try again.
+     *
+     * <p>Chosen over pessimistic locking because conflicts here are rare: a game belongs to
+     * one reader making one choice at a time. Locking the row on every read would cost every
+     * request to protect against a case that almost never happens.
+     */
+    @Version
+    private Long version;
+
     @ManyToOne
     @JoinColumn(nullable = false)
     private Book book;
@@ -61,6 +81,22 @@ public class GameSession {
     @Embedded
     private Consequence lastConsequence;
 
+    /**
+     * Which reader this game belongs to.
+     *
+     * <p><strong>This identifies a player; it does not authenticate one.</strong> The value
+     * comes from an id the browser generates on first visit and keeps in local storage, sent
+     * on each request — anyone can send any value, so it is a way of keeping readers' saved
+     * games apart, not a way of protecting them. Real accounts would replace it.
+     *
+     * <p>It exists because without it {@code GET /api/games} returns every game in progress
+     * from everyone, so one reader's "Continue Playing" list shows another's game and
+     * resuming it takes it over. That is a bug a visitor notices in the first minute; the
+     * absence of authentication is a limitation they have to be told about.
+     */
+    @Column(nullable = false)
+    private String playerId;
+
     @Column(nullable = false)
     private Instant updatedAt;
 
@@ -69,11 +105,13 @@ public class GameSession {
 
     /**
      * Starts a new session on a book's single BEGIN section, with full health.
+     *
+     * @param playerId identifies the reader this game belongs to — see {@link #playerId}
      * @throws IllegalArgumentException if the book doesn't have exactly one beginning —
      *         callers are expected to only pass books that already passed
      *         {@link com.pictet.adventurebook.validation.BookValidator}.
      */
-    public static GameSession start(Book book) {
+    public static GameSession start(Book book, String playerId) {
         var beginnings = book.beginnings();
         if (beginnings.size() != 1) {
             throw new IllegalArgumentException("Book must have exactly one beginning to start a game");
@@ -81,6 +119,7 @@ public class GameSession {
 
         GameSession session = new GameSession();
         session.book = book;
+        session.playerId = playerId;
         session.currentSectionNumber = beginnings.getFirst().getSectionNumber();
         session.health = STARTING_HEALTH;
         session.status = GameStatus.PLAYING;
@@ -115,12 +154,31 @@ public class GameSession {
 
         currentSectionNumber = chosen.getGotoId();
 
+        settleOutcome();
+        updatedAt = Instant.now();
+    }
+
+    /**
+     * Decides whether the game just ended, now that the reader has moved and any consequence
+     * has been applied.
+     *
+     * <p>The order is the rule, not an implementation detail: running out of health ends the
+     * game as {@link GameStatus#DEAD} even when the section it happened in is an ending, so a
+     * choice that kills the reader on the last page is a death, not a finish.
+     *
+     * <p>Kept as a branch rather than a set of pluggable conditions. There are two outcomes,
+     * fixed by the rules of the game, and they are not independent — they are one decision
+     * with a precedence. Behind an interface, that precedence would move into the order of a
+     * list somewhere else, which hides the very thing this method exists to state. A third
+     * outcome that genuinely varied on its own (a timer, a status effect) would be the point
+     * to reach for strategies; two mutually exclusive checks are not.
+     */
+    private void settleOutcome() {
         if (health <= MIN_HEALTH) {
             status = GameStatus.DEAD;
         } else if (currentSection().isEnding()) {
             status = GameStatus.FINISHED;
         }
-        updatedAt = Instant.now();
     }
 
     /**

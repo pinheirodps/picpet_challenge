@@ -48,12 +48,12 @@ class GameServiceTest {
 
     @Test
     void startGameLoadsTheBookAndSavesANewSession() {
-        when(gameSessionRepository.findLatestByBookIdAndStatus(1L, GameStatus.PLAYING))
+        when(gameSessionRepository.findResumableOnBook(1L, "test-player", GameStatus.PLAYING))
                 .thenReturn(Optional.empty());
         when(bookService.loadPlayableBook(1L)).thenReturn(book);
         when(gameSessionRepository.save(any(GameSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        GameSession session = gameService.startGame(1L);
+        GameSession session = gameService.startGame(1L, "test-player");
 
         assertThat(session.getCurrentSectionNumber()).isEqualTo(1);
         verify(gameSessionRepository).save(any(GameSession.class));
@@ -64,12 +64,12 @@ class GameServiceTest {
     // identical, and the reader loses track of which is which.
     @Test
     void startGameResumesAnExistingGameInsteadOfCreatingASecond() {
-        GameSession existing = GameSession.start(book);
+        GameSession existing = GameSession.start(book, "test-player");
         existing.choose(0);
-        when(gameSessionRepository.findLatestByBookIdAndStatus(1L, GameStatus.PLAYING))
+        when(gameSessionRepository.findResumableOnBook(1L, "test-player", GameStatus.PLAYING))
                 .thenReturn(Optional.of(existing));
 
-        GameSession session = gameService.startGame(1L);
+        GameSession session = gameService.startGame(1L, "test-player");
 
         assertThat(session).isSameAs(existing);
         assertThat(session.getCurrentSectionNumber()).isEqualTo(2);
@@ -81,12 +81,12 @@ class GameServiceTest {
     void startGameAfterTheEarlierOneEndedCreatesAFreshSession() {
         // Only PLAYING sessions are resumable, so a finished or stopped game doesn't block a
         // new one — that's how a reader deliberately plays a book again.
-        when(gameSessionRepository.findLatestByBookIdAndStatus(1L, GameStatus.PLAYING))
+        when(gameSessionRepository.findResumableOnBook(1L, "test-player", GameStatus.PLAYING))
                 .thenReturn(Optional.empty());
         when(bookService.loadPlayableBook(1L)).thenReturn(book);
         when(gameSessionRepository.save(any(GameSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        GameSession session = gameService.startGame(1L);
+        GameSession session = gameService.startGame(1L, "test-player");
 
         assertThat(session.getCurrentSectionNumber()).isEqualTo(1);
         assertThat(session.getHealth()).isEqualTo(GameSession.STARTING_HEALTH);
@@ -94,7 +94,7 @@ class GameServiceTest {
 
     @Test
     void chooseLoadsTheSessionAppliesTheChoiceAndSavesIt() {
-        GameSession session = GameSession.start(book);
+        GameSession session = GameSession.start(book, "test-player");
         when(gameSessionRepository.findWithBookAndSectionsById(42L)).thenReturn(Optional.of(session));
         when(gameSessionRepository.save(any(GameSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -116,11 +116,11 @@ class GameServiceTest {
 
     @Test
     void listSavedGamesReturnsOnlyInProgressSessionsMostRecentFirst() {
-        GameSession session = GameSession.start(book);
-        when(gameSessionRepository.findByStatusOrderByUpdatedAtDesc(GameStatus.PLAYING))
+        GameSession session = GameSession.start(book, "test-player");
+        when(gameSessionRepository.findResumableFor("test-player", GameStatus.PLAYING))
                 .thenReturn(List.of(session));
 
-        List<GameSession> result = gameService.listSavedGames();
+        List<GameSession> result = gameService.listSavedGames("test-player");
 
         assertThat(result).containsExactly(session);
     }

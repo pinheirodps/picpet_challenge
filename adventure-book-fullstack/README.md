@@ -43,8 +43,8 @@ exactly that origin; override with `APP_CORS_ALLOWED_ORIGINS` if you serve it el
 ### Tests
 
 ```bash
-cd backend  && mvn test       # 94 tests: unit, slice and one full-application integration test
-cd frontend && npm test       # 67 unit tests (Karma + Jasmine)
+cd backend  && mvn test       # 100 tests: unit, slice and one full-application integration test
+cd frontend && npm test       # 73 unit tests (Karma + Jasmine)
 cd frontend && npm run e2e    # 39 end-to-end tests (Playwright), both servers must be running
 ```
 
@@ -100,6 +100,16 @@ Playing" as identical rows — same title, often the same health — with no way
 apart, and the reader who pressed "begin" a second time by mistake has no idea which one holds
 their progress. Playing a book twice at once is still possible: stop the first game and start
 again, so the rarer intent is the one that takes the extra step.
+
+**Each reader sees only their own saved games.** The browser generates an id on first visit,
+keeps it in local storage, and sends it as `X-Player-Id`; the backend stores it on the session
+and filters the resume list by it. This identifies a reader without authenticating one —
+anyone can send any id — but without it every visitor shares one list and resuming someone
+else's game takes it over.
+
+**Two choices can't overwrite each other.** `GameSession` carries a `@Version` column, so a
+second write to the same game while the first is in flight fails with 409 rather than silently
+discarding a turn.
 
 `doc/presentation-guide.md` walks through how each step was reached, what broke along the way,
 and why the design decisions went the way they did. The same material is in Portuguese across
@@ -201,23 +211,16 @@ the books actually carry, plus a chapter count derived from the section count.
 
 ## Known limitations
 
-- **No authentication, so there is no notion of "my" games.** Two people can play at the same
-  time without interfering — each game is its own row, and the server keeps no state between
-  requests — but `GET /api/games` returns every game in progress, from everyone. So one
-  reader's "Continue Playing" list shows another reader's game, and resuming it takes it over.
-  `/admin`, where books are added, revised and deleted, is likewise open to anyone who opens
-  the app.
-
-  The brief doesn't ask for accounts and inventing a user model wasn't the point of the
-  exercise, so this was left as it is rather than half-solved. The smallest honest fix is a
-  `playerId` column on `GameSession`, set from an id the browser generates and sends on each
-  request, with the saved-games query filtered by it — that separates players, though it
-  doesn't authenticate them. Real accounts are what `/admin` would need.
-- **No optimistic locking on `GameSession`.** Two simultaneous choices on the same game
-  could overwrite each other. Single-player through a browser, this doesn't arise; a
-  `@Version` column is the fix if it ever ships for real.
-- **`ddl-auto: update`.** Fine when the schema comes from the entities and the data is
-  re-seedable. A real deployment would use Flyway or Liquibase.
+- **Readers are separated, but not authenticated.** Each game belongs to a `playerId` that the
+  browser generates and keeps in local storage, sent on every request as `X-Player-Id`, so one
+  reader's "Continue Playing" list shows only their own games. That is a convenience, not a
+  boundary: anyone can send any id, the same person on another device is a different player,
+  and `/admin` is open to whoever reaches it. The brief doesn't ask for accounts; real ones
+  would replace the browser-generated id with one issued at login.
+- **`ddl-auto: update` rather than versioned migrations.** Fine when the schema comes from the
+  entities and the data is re-seedable, but adding the `player_id` and `version` columns meant
+  deleting the local database — which a real deployment could not do. Flyway or Liquibase is
+  the answer there.
 - **Deleting a book destroys the games played on it**, rather than keeping them as history.
   A saved position means nothing without the sections it refers to, so there is nothing
   sensible to keep — but it does mean a delete is final, which is why the screen asks first.
@@ -229,7 +232,7 @@ the books actually carry, plus a chapter count derived from the section count.
 `adventure-book-bdd/` (a sibling folder, outside this project) holds a Cucumber suite — 31
 scenarios describing the same rules in plain English. It runs **this backend's own domain
 classes**, so a change to the game rules that breaks a scenario fails that build. It isn't
-part of this submission; the backend's own 94 tests stand on their own.
+part of this submission; the backend's own 100 tests stand on their own.
 
 To run it, install this module first so the suite can resolve it:
 

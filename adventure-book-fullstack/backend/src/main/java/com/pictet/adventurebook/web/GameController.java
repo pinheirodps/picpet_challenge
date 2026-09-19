@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -34,10 +35,31 @@ import java.util.List;
 @Tag(name = "Games", description = "Starting, playing and resuming an adventure book")
 public class GameController {
 
+    /**
+     * Header carrying the id the browser generated for this reader.
+     *
+     * <p>It separates readers' saved games; it does not authenticate them. Anyone can send
+     * any value, so this is a convenience, not a protection — {@code GET /api/games/{id}}
+     * still serves any game by id. Treating it as security would be the mistake; leaving
+     * every reader's games in one shared list was the bug it fixes.
+     */
+    static final String PLAYER_ID_HEADER = "X-Player-Id";
+
+    /**
+     * Where a game goes when the caller sends no player id — an older client, a curl command,
+     * or the Swagger UI. They all share one bucket rather than being rejected, so the API
+     * stays usable without the header.
+     */
+    private static final String ANONYMOUS_PLAYER = "anonymous";
+
     private final GameService gameService;
 
     public GameController(GameService gameService) {
         this.gameService = gameService;
+    }
+
+    private static String playerOrAnonymous(String playerId) {
+        return playerId == null || playerId.isBlank() ? ANONYMOUS_PLAYER : playerId;
     }
 
     @PostMapping("/api/games")
@@ -51,17 +73,22 @@ public class GameController {
             @ApiResponse(responseCode = "404", description = "No book with that id",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    public GameSessionDto startGame(@Valid @RequestBody StartGameRequest request) {
-        GameSession session = gameService.startGame(request.bookId());
+    public GameSessionDto startGame(@Valid @RequestBody StartGameRequest request,
+                                    @RequestHeader(value = PLAYER_ID_HEADER, required = false) String playerId) {
+        GameSession session = gameService.startGame(request.bookId(), playerOrAnonymous(playerId));
         return GameSessionMapper.toDto(session);
     }
 
     @GetMapping("/api/games")
-    @Operation(summary = "List saved games", description = "Returns every game still in progress, most "
-            + "recently played first, so the player can resume one. A game is \"saved\" automatically on "
-            + "every choice — there's no separate save action.")
-    public List<SavedGameDto> listSavedGames() {
-        return gameService.listSavedGames().stream().map(GameSessionMapper::toSavedGameDto).toList();
+    @Operation(summary = "List saved games", description = "Returns this player's games still in progress, "
+            + "most recently played first, so they can resume one. A game is \"saved\" automatically on "
+            + "every choice — there's no separate save action. Games are grouped by the "
+            + PLAYER_ID_HEADER + " header, which identifies a reader without authenticating them.")
+    public List<SavedGameDto> listSavedGames(
+            @RequestHeader(value = PLAYER_ID_HEADER, required = false) String playerId) {
+        return gameService.listSavedGames(playerOrAnonymous(playerId)).stream()
+                .map(GameSessionMapper::toSavedGameDto)
+                .toList();
     }
 
     @GetMapping("/api/games/{gameId}")

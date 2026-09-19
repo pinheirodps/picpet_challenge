@@ -28,8 +28,8 @@ cabeçalho com nome do livro, vida e paragem do jogo.
 
 **O que é atacável, e deve ser dito por ti primeiro:**
 
-- Não há autenticação, e isso tem uma consequência funcional concreta (abaixo).
-- Não há optimistic locking no `GameSession`.
+- Não há autenticação. Os jogos de cada leitor já estão separados (ver abaixo), mas a
+  separação não é uma proteção.
 - `ddl-auto: update` em vez de migrações versionadas.
 - Os pacotes `loader` e `exception` têm cobertura mais baixa que o resto (~78-80%).
 
@@ -97,9 +97,20 @@ produção. Como só é chamado uma vez por jogo, a cache não comprava nada em 
 **`ddl-auto: update`.** Aceitável aqui porque o esquema vem das entidades e os dados são
 recarregáveis. Num sistema real seria Flyway ou Liquibase. Está nas limitações do README.
 
-**Sem optimistic locking.** Duas escolhas simultâneas no mesmo jogo podem sobrepor-se. Um
-único jogador num browser não provoca isto; duas abas do mesmo jogo, sim. Correção: uma coluna
-`@Version`.
+**Optimistic locking, com `@Version`.** Cada escolha é um ler-modificar-escrever. Sem
+proteção, duas escolhas em simultâneo — o mesmo jogo em dois separadores, ou um duplo clique —
+liam ambas vida 10, ambas subtraíam, e a segunda escrita sobrepunha-se à primeira em silêncio:
+uma das jogadas desaparecia e o leitor ficava com mais vida do que as escolhas justificavam.
+
+Com a coluna `version`, a segunda escrita falha em vez de ganhar, e a API devolve **409** com
+"This game was changed somewhere else. Reload it and try again."
+
+Escolhido em vez de bloqueio pessimista porque os conflitos aqui são raros: um jogo pertence a
+um leitor que faz uma escolha de cada vez. Bloquear a linha em cada leitura custaria a todos
+os pedidos para proteger um caso que quase nunca acontece.
+
+> **Verificado na prática:** dois `POST /choices` em paralelo no mesmo jogo devolvem 200 e 409,
+> não 200 e 200.
 
 ---
 
@@ -146,6 +157,8 @@ mais do que fingir que correu tudo à primeira.
 | Texto das secções perdido na edição | Campos vazios ao editar | `sectionFrom` não copiava o texto | Corrigido, com teste |
 | Jogos duplicados no mesmo livro | Entradas indistinguíveis | `POST /api/games` criava sempre | Retomar em vez de duplicar |
 | Lista "Continue Playing" sem limite | Empurrava a biblioteca | Sem recorte | 4 + "Show all" |
+| Jogos de todos na mesma lista | Retomar roubava o jogo de outro | Sem dono nas sessões | Coluna `playerId`, queries filtradas |
+| Escolhas simultâneas sobrepunham-se | Uma jogada desaparecia | Sem optimistic locking | `@Version` → 409 |
 
 **Todos têm teste de regressão.** Não foram só corrigidos.
 
@@ -153,25 +166,38 @@ mais do que fingir que correu tudo à primeira.
 
 ## A limitação mais séria
 
-**Não há noção de "os meus jogos".**
+**Os leitores estão separados, mas não autenticados.** É uma distinção que convém fazer tu
+antes de ta fazerem.
 
-O que **funciona**: duas pessoas podem jogar ao mesmo tempo sem interferir. Cada jogo é a sua
-própria linha, o backend não guarda estado entre pedidos, e isto foi verificado com dois jogos
-simultâneos no mesmo livro.
+O que **funciona**: cada jogo pertence a um `playerId`, e o `GET /api/games` devolve só os
+desse leitor. Duas pessoas jogam ao mesmo tempo sem interferir e sem ver os jogos uma da outra.
+Verificado: o leitor A vê o seu jogo, o B vê o dele, e quem não envia id não vê nenhum.
 
-O que **não funciona**: o `GET /api/games` devolve os jogos em curso de toda a gente. A lista
-"Continue Playing" de uma pessoa mostra o jogo de outra, e retomá-lo rouba-o. O `/admin` está
-igualmente aberto a qualquer visitante, o que significa que qualquer pessoa pode apagar
-qualquer livro.
+**Como funciona:** o browser gera um id na primeira visita (`crypto.randomUUID()`), guarda-o em
+`localStorage`, e um interceptor HTTP envia-o no header `X-Player-Id` em cada chamada à API. O
+backend grava-o na sessão e filtra por ele.
 
-**Porque não foi resolvido:** o enunciado é de 4 horas e não pede contas de utilizador.
-Acrescentar Spring Security, modelo de utilizador, registo, login e guards seria facilmente
-mais tempo do que todo o resto — e não demonstra nada do que foi pedido.
+O que **não** faz:
 
-**A correção mínima honesta**, se perguntarem: uma coluna `playerId` no `GameSession`,
-preenchida a partir de um id gerado no browser e enviado em cada pedido, com a query de jogos
-guardados filtrada por ela. Separa jogadores sem os autenticar. Contas a sério é o que o
-`/admin` precisaria.
+- **Não protege.** Qualquer pessoa pode enviar qualquer id. Quem souber o id de outro leitor
+  vê os jogos dele.
+- **Não identifica através de dispositivos.** O mesmo utilizador noutro computador, ou depois
+  de limpar os dados do site, é outro jogador e começa com a lista vazia.
+- **Não cobre o `/admin`**, que continua aberto a qualquer visitante — qualquer pessoa pode
+  apagar qualquer livro.
+
+> **A frase a usar:** "isto separa leitores, não os autentica". A separação resolve um bug que
+> um visitante nota no primeiro minuto; a ausência de autenticação é uma limitação que tem de
+> lhe ser dita.
+
+**Porque não há autenticação a sério:** o enunciado é de 4 horas e não pede contas de
+utilizador. Acrescentar Spring Security, modelo de utilizador, registo, login e guards seria
+facilmente mais tempo do que todo o resto — e não demonstra nada do que foi pedido.
+
+**Como seria o passo seguinte:** substituir o id gerado no browser por um emitido depois do
+login, o que muda pouco no resto do código — o `playerId` já atravessa o serviço e as queries,
+só passaria a vir do token em vez do header. O `/admin` ficaria atrás de um papel de
+administrador.
 
 ---
 
@@ -179,11 +205,11 @@ guardados filtrada por ela. Separa jogadores sem os autenticar. Contas a sério 
 
 | Suíte | Nº | Estado |
 |:--|:--|:--|
-| Backend | 94 | ✅ |
-| Frontend unitário | 67 | ✅ |
+| Backend | 100 | ✅ |
+| Frontend unitário | 73 | ✅ |
 | Playwright E2E | 39 | ✅ |
 | Cucumber BDD | 31 cenários / 140 steps | ✅ |
-| **Total** | **231** | |
+| **Total** | **243** | |
 
 ### Cobertura medida
 
@@ -191,10 +217,10 @@ Backend (JaCoCo, `mvn test` → `target/site/jacoco/index.html`):
 
 | Métrica | Valor |
 |:--|:--|
-| Instruções | 94,3% |
-| Ramos | 88,1% |
-| Linhas | 93,7% |
-| Métodos | 95,3% |
+| Instruções | 94,5% |
+| Ramos | 87,5% |
+| Linhas | 94,2% |
+| Métodos | 95,4% |
 
 Por pacote, o que interessa é **onde** a cobertura está alta:
 
@@ -224,10 +250,14 @@ carregamento real dos livros, validação real e HTTP real.
 
 ## Se tivesse mais tempo, pela ordem que faria
 
-1. **`playerId` nas sessões.** Resolve o problema funcional mais visível com pouco código.
-2. **`@Version` no `GameSession`.** Uma linha, elimina a condição de corrida.
-3. **Flyway.** Substitui o `ddl-auto: update` por migrações versionadas.
-4. **Testes nos caminhos de erro do `loader`.** É o pacote com menor cobertura.
-5. **Diálogos de confirmação próprios.** Polimento, não correção.
+1. **Flyway.** Substitui o `ddl-auto: update` por migrações versionadas. Já se sentiu a falta:
+   acrescentar as colunas `player_id` e `version` obrigou a apagar a base de dados local, o que
+   num sistema real não é opção.
+2. **Testes nos caminhos de erro do `loader`.** É o pacote com menor cobertura (77,6%).
+3. **Diálogos de confirmação próprios.** Polimento, não correção.
+4. **Autenticação a sério**, se o âmbito do projeto mudasse — ver a secção anterior.
+
+> Os dois primeiros itens desta lista (o `playerId` e o `@Version`) já foram feitos; ficam
+> descritos acima, entre as correções.
 
 Autenticação completa ficaria depois de tudo isto — e só se o âmbito do projeto mudasse.
