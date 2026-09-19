@@ -1,0 +1,181 @@
+<header class="editor-header">
+  <button type="button" class="link-button" (click)="cancel()">← Back to Manage Library</button>
+  <h1>{{ editingId() ? 'Revise Adventure' : 'Add a New Adventure' }}</h1>
+</header>
+
+@if (editingId() && gamesAtRisk() > 0) {
+  <p class="editor-warning" role="note">
+    {{ gamesAtRisk() === 1 ? '1 game is' : gamesAtRisk() + ' games are' }} still in progress on
+    this book. Saving your changes will end
+    {{ gamesAtRisk() === 1 ? 'it' : 'them' }} — a reader's saved place is a section number in
+    the version they started.
+  </p>
+}
+
+<main class="editor">
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <section class="editor-card">
+      <h2>Book Details</h2>
+
+      <label class="field">
+        <span>Title</span>
+        <input
+          type="text"
+          formControlName="title"
+          placeholder="The Whispering Woods"
+          [attr.aria-invalid]="showFieldErrors() && form.get('title')?.invalid"
+        />
+        @if (showFieldErrors() && form.get('title')?.invalid) {
+          <span class="field__error">A title is required.</span>
+        }
+      </label>
+
+      <label class="field">
+        <span>Author</span>
+        <input type="text" formControlName="author" placeholder="Your name" />
+      </label>
+
+      <label class="field">
+        <span>Difficulty</span>
+        <select formControlName="difficulty">
+          @for (difficulty of difficulties; track difficulty) {
+            <option [value]="difficulty">{{ difficulty }}</option>
+          }
+        </select>
+      </label>
+    </section>
+
+    <section formArrayName="sections" class="sections">
+      <h2>Sections</h2>
+      <p class="hint">
+        Every section needs a unique id. Options point to another section's id
+        (<code>gotoId</code>). Exactly one section must be BEGIN, and at least one must be END.
+      </p>
+
+      @for (section of sections.controls; track section; let sectionIndex = $index) {
+        <div class="section-card" [formGroupName]="sectionIndex">
+          <div class="section-card__header">
+            <label class="field field--inline">
+              <span>Id</span>
+              <input type="number" formControlName="id" min="1" />
+            </label>
+
+            <label class="field field--inline">
+              <span>Type</span>
+              <select formControlName="type" aria-label="Type">
+                @for (type of sectionTypes; track type) {
+                  <option [value]="type">{{ type }}</option>
+                }
+              </select>
+            </label>
+
+            @if (sections.length > 1) {
+              <button type="button" class="remove-button" (click)="removeSection(sectionIndex)">
+                Remove section
+              </button>
+            }
+          </div>
+
+          <label class="field">
+            <span>Text</span>
+            <textarea
+              formControlName="text"
+              rows="2"
+              placeholder="What the reader sees on this page"
+              [attr.aria-invalid]="showFieldErrors() && section.get('text')?.invalid"
+            ></textarea>
+            @if (showFieldErrors() && section.get('text')?.invalid) {
+              <span class="field__error">This section needs some text.</span>
+            }
+          </label>
+
+          @if (section.get('type')?.value !== 'END') {
+            <div formArrayName="options" class="options-editor">
+              <h3>Options</h3>
+              @for (option of optionsOf(sectionIndex).controls; track option; let optionIndex = $index) {
+                <div class="option-card" [formGroupName]="optionIndex">
+                  <div class="option-card__row">
+                    <label class="field field--grow">
+                      <span>Description</span>
+                      <input
+                        type="text"
+                        formControlName="description"
+                        placeholder="Cross the bridge"
+                        [attr.aria-invalid]="showFieldErrors() && option.get('description')?.invalid"
+                      />
+                      @if (showFieldErrors() && option.get('description')?.invalid) {
+                        <span class="field__error">Describe what this choice does.</span>
+                      }
+                    </label>
+                    <label class="field field--inline">
+                      <span>Goes to id</span>
+                      <input type="number" formControlName="gotoId" min="1" />
+                    </label>
+                    <button type="button" class="remove-button" (click)="removeOption(sectionIndex, optionIndex)">
+                      Remove
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    class="toggle-consequence"
+                    (click)="toggleConsequence(sectionIndex, optionIndex)"
+                  >
+                    {{ hasConsequence(sectionIndex, optionIndex) ? '− Remove consequence' : '+ Add consequence' }}
+                  </button>
+
+                  @if (hasConsequence(sectionIndex, optionIndex)) {
+                    <div class="consequence-editor" formGroupName="consequence">
+                      <label class="field field--inline">
+                        <span>Effect</span>
+                        <select formControlName="type" aria-label="Effect">
+                          @for (type of consequenceTypes; track type) {
+                            <option [value]="type">{{ type }}</option>
+                          }
+                        </select>
+                      </label>
+                      <label class="field field--inline">
+                        <span>Amount</span>
+                        <input type="number" formControlName="value" min="1" />
+                      </label>
+                      <label class="field field--grow">
+                        <span>Flavor text</span>
+                        <input type="text" formControlName="text" placeholder="What happens to the player" />
+                      </label>
+                    </div>
+                  }
+                </div>
+              }
+              <button type="button" class="add-button" (click)="addOption(sectionIndex)">+ Add option</button>
+            </div>
+          }
+        </div>
+      }
+
+      <button type="button" class="add-button add-button--section" (click)="addSection()">+ Add section</button>
+    </section>
+
+    @if (submitErrors().length > 0) {
+      <div class="submit-errors" role="alert">
+        <p>The book couldn't be saved:</p>
+        <ul>
+          @for (error of submitErrors(); track error) {
+            <li>{{ error }}</li>
+          }
+        </ul>
+      </div>
+    }
+
+    <div class="editor-actions">
+      <button type="submit" class="cta" [disabled]="submitting() || loading()">
+        @if (submitting()) {
+          Saving…
+        } @else if (editingId()) {
+          Save Changes
+        } @else {
+          Publish Adventure
+        }
+      </button>
+    </div>
+  </form>
+</main>

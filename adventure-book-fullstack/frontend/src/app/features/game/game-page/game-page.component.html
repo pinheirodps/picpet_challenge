@@ -1,0 +1,103 @@
+@if (loading()) {
+  <p class="status" role="status">Loading your adventure…</p>
+} @else if (errorMessage() && !session()) {
+  <div class="status status--error" role="alert">
+    <p>{{ errorMessage() }}</p>
+    <button type="button" class="link-button" (click)="backToLibrary()">← Back to Library</button>
+  </div>
+} @else if (session()) {
+  @let game = session()!;
+
+  <header class="game-header">
+    <button type="button" class="link-button" (click)="backToLibrary()">← Back to Library</button>
+
+    <span class="game-header__title">{{ game.bookTitle }}</span>
+
+    <div class="game-header__right">
+      <div
+        class="health"
+        [class.health--low]="game.health <= 3"
+        [attr.aria-label]="'Health: ' + game.health + ' of ' + game.maxHealth"
+      >
+        <span aria-hidden="true">♥</span> {{ game.health }} / {{ game.maxHealth }}
+      </div>
+
+      @if (game.status === 'PLAYING') {
+        <button type="button" class="save-button" (click)="confirmSave()">
+          {{ justSaved() ? 'Saved ✓' : '💾 Save Progress' }}
+        </button>
+        <button type="button" class="stop-button" [disabled]="busy()" (click)="stopGame()">
+          ⏹ Stop
+        </button>
+      }
+    </div>
+  </header>
+
+  <main class="game-content">
+    @if (game.status === 'PLAYING') {
+      <article class="section-card">
+        @if (game.lastConsequence; as consequence) {
+          <p
+            class="consequence"
+            [class.consequence--harm]="consequence.healthChange < 0"
+            [class.consequence--heal]="consequence.healthChange > 0"
+            role="status"
+          >
+            <span class="consequence__delta">
+              {{ consequence.healthChange > 0 ? '+' : '' }}{{ consequence.healthChange }} HP
+            </span>
+            @if (consequence.text) {
+              <span class="consequence__text">{{ consequence.text }}</span>
+            }
+          </p>
+        }
+
+        <p class="section-text" aria-live="polite">{{ game.sectionText }}</p>
+
+        <h2 class="options-title">What do you choose?</h2>
+        <div class="options">
+          @for (option of game.options; track option.index) {
+            <button type="button" class="option" [disabled]="busy()" (click)="choose(option.index)">
+              <span class="option__number" aria-hidden="true">{{ option.index + 1 }}</span>
+              <span class="option__text">{{ option.description }}</span>
+            </button>
+          }
+        </div>
+      </article>
+
+      @if (errorMessage()) {
+        <p class="status status--error" role="alert">{{ errorMessage() }}</p>
+      }
+    } @else {
+      <div
+        class="game-end"
+        [class.game-end--dead]="game.status === 'DEAD'"
+        [class.game-end--finished]="game.status === 'FINISHED'"
+        role="status"
+      >
+        <h1>
+          @switch (game.status) {
+            @case ('DEAD') { You Have Perished }
+            @case ('FINISHED') { The End }
+            @default { Adventure Stopped }
+          }
+        </h1>
+
+        @if (game.status === 'DEAD' && game.lastConsequence; as consequence) {
+          <p class="game-end__cause">
+            <span class="consequence__delta">{{ consequence.healthChange }} HP</span>
+            @if (consequence.text) {
+              {{ consequence.text }}
+            }
+          </p>
+        }
+
+        <p>{{ game.sectionText }}</p>
+
+        <button type="button" class="cta" (click)="backToLibrary()">
+          {{ game.status === 'FINISHED' ? 'Choose a New Adventure' : 'Return to the Library' }}
+        </button>
+      </div>
+    }
+  </main>
+}

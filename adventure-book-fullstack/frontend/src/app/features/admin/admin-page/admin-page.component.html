@@ -1,0 +1,70 @@
+<header class="admin__header">
+  <div>
+    <h1 class="admin__title">Manage Library</h1>
+    <p class="admin__subtitle">Add a new adventure, revise one, or remove it from the shelf.</p>
+  </div>
+  <div class="admin__header-actions">
+    <button type="button" class="btn btn--ghost" (click)="backToLibrary()">Back to library</button>
+    <button type="button" class="btn btn--primary" (click)="addBook()">+ Add Adventure</button>
+  </div>
+</header>
+
+<p class="admin__note" role="note">
+  Revising or removing a book ends any game still in progress on it — a reader's saved place
+  is a section number in the version they started.
+</p>
+
+@if (errorMessage(); as error) {
+  <p class="admin__error" role="alert">{{ error }}</p>
+}
+
+@if (loading()) {
+  <p class="admin__status">Loading the library…</p>
+} @else if (books().length === 0) {
+  <p class="admin__status">
+    The library is empty. <button type="button" class="link" (click)="addBook()">Add the first adventure.</button>
+  </p>
+} @else {
+  <table class="admin__table">
+    <caption class="visually-hidden">Every book in the library, with controls to revise or remove each one</caption>
+    <thead>
+      <tr>
+        <th scope="col">Title</th>
+        <th scope="col">Author</th>
+        <th scope="col">Difficulty</th>
+        <th scope="col" class="numeric">Chapters</th>
+        <th scope="col"><span class="visually-hidden">Actions</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (book of books(); track book.id) {
+        <tr [class.is-deleting]="deletingId() === book.id">
+          <td class="admin__book-title">{{ book.title }}</td>
+          <td>{{ book.author || '—' }}</td>
+          <td>
+            <span class="pill" [class]="'pill--' + book.difficulty.toLowerCase()">{{ book.difficulty }}</span>
+          </td>
+          <td class="numeric">{{ book.sectionCount }}</td>
+          <td class="admin__row-actions">
+            <button
+              type="button"
+              class="btn btn--small"
+              [disabled]="deletingId() !== null"
+              (click)="editBook(book.id)"
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              class="btn btn--small btn--danger"
+              [disabled]="deletingId() !== null"
+              (click)="deleteBook(book)"
+            >
+              {{ deletingId() === book.id ? 'Deleting…' : 'Delete' }}
+            </button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}

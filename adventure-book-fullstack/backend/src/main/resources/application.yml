@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: adventure-book-backend
+  datasource:
+    url: jdbc:h2:file:./data/adventure-book;AUTO_SERVER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      # Fine for this assessment: the schema is derived from the entities and the sample
+      # books are re-seeded on an empty database. A real deployment would use Flyway.
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  data:
+    web:
+      pageable:
+        default-page-size: 12
+        # Without a cap, ?size=100000 would happily try to materialise the whole table.
+        max-page-size: 100
+
+app:
+  # Where the Angular dev server runs. Override with APP_CORS_ALLOWED_ORIGINS in any other
+  # environment rather than editing this file.
+  cors:
+    allowed-origins: http://localhost:4200
+  books:
+    # The sample books shipped with the assessment, loaded once into an empty database.
+    seed-location: classpath:books/*.json
+
+server:
+  port: 8080
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    com.pictet.adventurebook: INFO
+
+---
+# Development-only extras. Run with: mvn spring-boot:run -Dspring-boot.run.profiles=dev
+spring:
+  config:
+    activate:
+      on-profile: dev
+  h2:
+    console:
+      enabled: true
+      path: /h2-console

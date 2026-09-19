@@ -1,0 +1,219 @@
+:host {
+  display: block;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem 1rem 3rem;
+}
+
+.admin__header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.admin__title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  margin: 0;
+  color: var(--color-text);
+}
+
+.admin__subtitle {
+  margin: 0.25rem 0 0;
+  color: var(--color-text-muted);
+}
+
+.admin__header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.admin__note {
+  margin: 0 0 1.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-medium-bg);
+  border-left: 3px solid var(--color-medium);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.admin__error {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-hard-bg);
+  border-left: 3px solid var(--color-hard);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  color: var(--color-hard);
+}
+
+.admin__status {
+  padding: 2rem 0;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.admin__table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.admin__table th,
+.admin__table td {
+  padding: 0.85rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin__table th {
+  background: var(--color-bg);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.admin__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin__book-title {
+  font-weight: 600;
+}
+
+.numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin__row-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+/* A row being deleted stays readable but clearly on its way out. */
+.is-deleting {
+  opacity: 0.5;
+}
+
+.pill {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.pill--easy {
+  background: var(--color-easy-bg);
+  color: var(--color-easy);
+}
+
+.pill--medium {
+  background: var(--color-medium-bg);
+  color: var(--color-medium);
+}
+
+.pill--hard {
+  background: var(--color-hard-bg);
+  color: var(--color-hard);
+}
+
+.btn {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--color-gold);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn--small {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.btn--primary {
+  background: var(--color-gold);
+  border-color: var(--color-gold);
+  color: var(--color-header-bg);
+  font-weight: 600;
+}
+
+.btn--ghost {
+  background: transparent;
+}
+
+.btn--danger {
+  color: var(--color-hard);
+  border-color: var(--color-hard-bg);
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: var(--color-hard-bg);
+  border-color: var(--color-hard);
+}
+
+.link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-medium);
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
+
+/* The table would need a horizontal scroll on a phone; stacking each row as a card reads
+   better and keeps the actions reachable. */
+@media (max-width: 640px) {
+  .admin__table,
+  .admin__table tbody,
+  .admin__table tr,
+  .admin__table td {
+    display: block;
+    width: 100%;
+  }
+
+  .admin__table thead {
+    display: none;
+  }
+
+  .admin__table tr {
+    border-bottom: 1px solid var(--color-border);
+    padding: 0.5rem 0;
+  }
+
+  .admin__table td {
+    border-bottom: none;
+    padding: 0.3rem 1rem;
+  }
+
+  .numeric {
+    text-align: left;
+  }
+
+  .admin__row-actions {
+    justify-content: flex-start;
+    padding-top: 0.5rem;
+  }
+}

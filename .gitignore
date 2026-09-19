@@ -1,0 +1,40 @@
+# Build outputs
+target/
+dist/
+.angular/
+
+# Dependencies
+node_modules/
+
+# Database files
+data/
+*.mv.db
+*.trace.db
+*.lock.db
+
+# Test reports & results
+test-results/
+playwright-report/
+blob-report/
+
+# IDE & OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Not ours to redistribute — the assessment brief belongs to Pictet Technologies
+adventure-book-fullstack/Adventure Book Application.pdf
+
+# Working material, not part of the submission
+doc/report.pdf
+
+# Claude Code local state
+.claude/

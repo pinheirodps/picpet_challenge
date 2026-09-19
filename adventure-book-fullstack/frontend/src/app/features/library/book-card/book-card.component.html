@@ -1,0 +1,18 @@
+@let summary = book();
+
+<article class="card">
+  <h3 class="card__title">{{ summary.title }}</h3>
+  <p class="card__author">by {{ summary.author }}</p>
+
+  <div class="card__badges">
+    <span class="badge" [class]="'badge--' + summary.difficulty.toLowerCase()">{{ summary.difficulty }}</span>
+    <span class="card__meta">
+      <span aria-hidden="true">📖</span>
+      {{ summary.sectionCount }} {{ summary.sectionCount === 1 ? 'chapter' : 'chapters' }}
+    </span>
+  </div>
+
+  <button type="button" class="card__cta" (click)="onBeginQuest()">
+    <span aria-hidden="true">★</span> Begin Quest
+  </button>
+</article>

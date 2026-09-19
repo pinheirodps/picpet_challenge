@@ -1,0 +1,181 @@
+{
+  "title": "Dragon Quest",
+  "author": "Rowan Ashfell",
+  "difficulty": "HARD",
+  "sections": [
+    {
+      "id": 1,
+      "text": "Smoke rises from the northern peaks. The village elder has asked you to deal with the dragon before it burns the harvest. You reach the foot of the mountain as dusk falls.",
+      "type": "BEGIN",
+      "options": [
+        {
+          "description": "Climb the exposed cliff path",
+          "gotoId": 10
+        },
+        {
+          "description": "Follow the old miners' tunnel",
+          "gotoId": 20
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "text": "The cliff path is steep and loose stones give way underfoot as you climb.",
+      "type": "NODE",
+      "options": [
+        {
+          "description": "Push on quickly before dark",
+          "gotoId": 30,
+          "consequence": {
+            "type": "LOSE_HEALTH",
+            "value": "3",
+            "text": "You slip and scrape against the rock, but keep climbing."
+          }
+        },
+        {
+          "description": "Take it slow and test each foothold",
+          "gotoId": 30
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "text": "The tunnel is pitch black and smells of sulfur. Something large shifts in the dark ahead.",
+      "type": "NODE",
+      "options": [
+        {
+          "description": "Light a torch and keep moving",
+          "gotoId": 40
+        },
+        {
+          "description": "Turn back and take the cliff instead",
+          "gotoId": 10
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "text": "You reach a narrow ledge overlooking the dragon's lair. It hasn't noticed you yet.",
+      "type": "NODE",
+      "options": [
+        {
+          "description": "Sneak past toward the treasure hoard",
+          "gotoId": 50
+        },
+        {
+          "description": "Throw a rock to draw it out into the open",
+          "gotoId": 60
+        }
+      ]
+    },
+    {
+      "id": 40,
+      "text": "A cave bat colony explodes from the dark, clawing at you before scattering into the tunnel behind.",
+      "type": "NODE",
+      "options": [
+        {
+          "description": "Press forward to the lair",
+          "gotoId": 30,
+          "consequence": {
+            "type": "LOSE_HEALTH",
+            "value": "4",
+            "text": "The bats' claws leave shallow but stinging cuts."
+          }
+        }
+      ]
+    },
+    {
+      "id": 50,
+      "text": "You slip past the sleeping dragon and reach the edge of its hoard, gold and old bones glittering in the low light.",
+      "type": "NODE",
+      "options": [
+        {
+          "description": "Take only what you can carry quietly and leave",
+          "gotoId": 100
+        },
+        {
+          "description": "Search for the fabled dragon-slaying blade rumored to be buried in the hoard",
+          "gotoId": 70,
+          "consequence": {
+            "type": "LOSE_HEALTH",
+            "value": "2",
+            "text": "Shifting coins clatter loudly as you dig through the pile."
+          }
+        }
+      ]
+    },
+    {
+      "id": 60,
+      "text": "The dragon roars awake and fixes its eyes on you, smoke curling from its nostrils.",
+      "type": "NODE",
+      "options": [
+        {
+          "description": "Stand your ground and fight",
+          "gotoId": 80
+        },
+        {
+          "description": "Retreat down the ledge",
+          "gotoId": 90
+        }
+      ]
+    },
+    {
+      "id": 70,
+      "text": "Your digging wakes the dragon. It rises, blocking the only way out, but you feel the cold hilt of an ancient blade under your hand.",
+      "type": "NODE",
+      "options": [
+        {
+          "description": "Grab the blade and face the dragon",
+          "gotoId": 110
+        }
+      ]
+    },
+    {
+      "id": 80,
+      "text": "You meet the dragon's charge head on. Its claws rake across your side as you scramble away from its jaws.",
+      "type": "NODE",
+      "options": [
+        {
+          "description": "Strike back at its exposed foreleg",
+          "gotoId": 110,
+          "consequence": {
+            "type": "LOSE_HEALTH",
+            "value": "5",
+            "text": "The claws tear deep before you break free."
+          }
+        }
+      ]
+    },
+    {
+      "id": 90,
+      "text": "You turn to flee, but the ledge crumbles beneath your feet and you fall hard onto the rocks below.",
+      "type": "NODE",
+      "options": [
+        {
+          "description": "Pick yourself up and run for the tunnel entrance",
+          "gotoId": 120,
+          "consequence": {
+            "type": "LOSE_HEALTH",
+            "value": "6",
+            "text": "The fall knocks the wind out of you and leaves your leg badly bruised."
+          }
+        }
+      ]
+    },
+    {
+      "id": 100,
+      "text": "You slip away with a modest handful of gold, the dragon none the wiser. The village will be safe for now, and you're richer for the trouble.",
+      "type": "END"
+    },
+    {
+      "id": 110,
+      "text": "The ancient blade finds its mark. The dragon lets out a final, earth-shaking roar before collapsing. The mountain falls silent, and the village is finally safe.",
+      "type": "END"
+    },
+    {
+      "id": 120,
+      "text": "You stumble out of the mountain, bruised and empty-handed, but alive. The dragon remains — someone else will have to finish what you started.",
+      "type": "END"
+    }
+  ]
+}

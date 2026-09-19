@@ -1,0 +1,116 @@
+<header class="hero">
+  <h1 class="hero__title"><span aria-hidden="true">✨</span> Adventure Awaits <span aria-hidden="true">✨</span></h1>
+  <p class="hero__subtitle">
+    Embark on epic quests where every choice shapes your destiny. Explore mystical realms,
+    solve ancient mysteries, and become the hero of your own story.
+  </p>
+  <div class="hero__badge">
+    <span aria-hidden="true">📚</span> {{ totalBooks() }} Epic {{ totalBooks() === 1 ? 'Adventure' : 'Adventures' }} Available
+    <span aria-hidden="true">✨</span>
+  </div>
+</header>
+
+@if (savedGames().length > 0) {
+  <section class="continue">
+    <h2 class="continue__title">
+      <span aria-hidden="true">⏳</span> Continue Playing
+      @if (savedGames().length > 1) {
+        <span class="continue__count">{{ savedGames().length }} in progress</span>
+      }
+    </h2>
+    <div class="continue__list">
+      @for (game of visibleSavedGames(); track game.gameId) {
+        <button type="button" class="continue__item" (click)="resumeGame(game.gameId)">
+          <span class="continue__book">{{ game.bookTitle }}</span>
+          <span class="continue__health"><span aria-hidden="true">♥</span> {{ game.health }} / 10</span>
+        </button>
+      }
+    </div>
+    @if (hiddenSavedGameCount() > 0) {
+      <button
+        type="button"
+        class="continue__toggle"
+        [attr.aria-expanded]="showAllSavedGames()"
+        (click)="toggleAllSavedGames()"
+      >
+        {{ showAllSavedGames() ? 'Show fewer' : 'Show all ' + savedGames().length }}
+      </button>
+    }
+  </section>
+}
+
+<main class="library">
+  <h2 class="library__title"><span aria-hidden="true">📚</span> The Adventure Library</h2>
+  <p class="library__subtitle">
+    Choose your next adventure from our collection of interactive tales. Each book offers
+    unique paths and multiple endings based on your choices.
+  </p>
+
+  <div class="library__search">
+    <label class="visually-hidden" for="library-search">Search adventures</label>
+    <input
+      id="library-search"
+      type="search"
+      placeholder="Search adventures..."
+      [value]="query()"
+      (input)="onQueryChange($any($event.target).value)"
+    />
+  </div>
+
+  <div class="library__filters">
+    <span class="library__filters-label"><span aria-hidden="true">▾</span> Filters:</span>
+    @for (difficulty of difficulties; track difficulty) {
+      <button
+        type="button"
+        class="filter-pill"
+        [class.filter-pill--active]="selectedDifficulty() === difficulty"
+        [attr.aria-pressed]="selectedDifficulty() === difficulty"
+        (click)="onDifficultyToggle(difficulty)"
+      >
+        {{ difficulty }}
+      </button>
+    }
+  </div>
+
+  @if (loading()) {
+    <p class="library__status" role="status">Loading adventures…</p>
+  } @else if (errorMessage()) {
+    <p class="library__status library__status--error" role="alert">{{ errorMessage() }}</p>
+  } @else if (books().length === 0) {
+    <p class="library__status" role="status">No adventures match your search yet.</p>
+  } @else {
+    <div class="library__grid">
+      @for (book of books(); track book.id) {
+        <app-book-card [book]="book" (beginQuest)="onBeginQuest($event)" />
+      }
+    </div>
+
+    @if (totalPages() > 1) {
+      <nav class="pagination" aria-label="Library pages">
+        <button
+          type="button"
+          class="pagination__step"
+          [disabled]="pageIndex() === 0"
+          (click)="goToPage(pageIndex() - 1)"
+        >
+          ← Previous
+        </button>
+        <span class="pagination__status">Page {{ pageIndex() + 1 }} of {{ totalPages() }}</span>
+        <button
+          type="button"
+          class="pagination__step"
+          [disabled]="pageIndex() + 1 >= totalPages()"
+          (click)="goToPage(pageIndex() + 1)"
+        >
+          Next →
+        </button>
+      </nav>
+    }
+  }
+
+  <div class="library__add">
+    <button type="button" class="add-adventure" (click)="onManageLibrary()">
+      <span aria-hidden="true">+</span> Add Your Own Adventure
+    </button>
+  </div>
+</main>

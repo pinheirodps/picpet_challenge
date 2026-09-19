@@ -1,0 +1,241 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: var(--color-bg);
+}
+
+.editor-header {
+  padding: 14px 24px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.editor-header h1 {
+  font-size: 1.3rem;
+  margin-top: 6px;
+}
+
+.link-button {
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  padding: 4px 0;
+}
+
+/* Shown only when revising a book that readers are part-way through. */
+.editor-warning {
+  margin: 0;
+  padding: 12px 24px;
+  background: var(--color-medium-bg);
+  border-bottom: 1px solid var(--color-medium);
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.editor {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 28px 20px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.editor-card,
+.section-card,
+.option-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+}
+
+.editor-card h2,
+.sections h2 {
+  font-size: 1.05rem;
+  margin-bottom: 14px;
+}
+
+.hint {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  margin: -6px 0 16px;
+}
+
+.hint code {
+  background: var(--color-border);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.field input,
+.field select,
+.field textarea {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 1px;
+}
+
+.field input[aria-invalid='true'],
+.field textarea[aria-invalid='true'] {
+  border-color: var(--color-hard);
+}
+
+.field__error {
+  color: var(--color-hard);
+  font-size: 0.78rem;
+}
+
+.section-card {
+  margin-bottom: 16px;
+}
+
+.section-card__header {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.field--inline {
+  min-width: 90px;
+}
+
+.field--grow {
+  flex: 1;
+  min-width: 160px;
+}
+
+.options-editor {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--color-border);
+}
+
+.options-editor h3 {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin: 0 0 10px;
+  font-family: var(--font-body);
+  font-weight: 600;
+}
+
+.option-card {
+  background: var(--color-bg);
+  margin-bottom: 10px;
+}
+
+.option-card__row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.consequence-editor {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--color-border);
+}
+
+.toggle-consequence {
+  border: none;
+  background: none;
+  color: var(--color-medium);
+  font-size: 0.8rem;
+  padding: 2px 0;
+  font-weight: 600;
+}
+
+.remove-button {
+  border: 1px solid var(--color-hard);
+  background: none;
+  color: var(--color-hard);
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.add-button {
+  border: 1px dashed var(--color-border);
+  background: none;
+  color: var(--color-text-muted);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.82rem;
+  width: 100%;
+}
+
+.add-button:hover {
+  border-color: var(--color-gold);
+  color: var(--color-text);
+}
+
+.add-button--section {
+  padding: 12px;
+  font-weight: 600;
+}
+
+.submit-errors {
+  background: var(--color-hard-bg);
+  border: 1px solid var(--color-hard);
+  border-radius: 8px;
+  padding: 14px 18px;
+  color: var(--color-hard);
+  font-size: 0.85rem;
+}
+
+.submit-errors ul {
+  margin: 6px 0 0;
+  padding-left: 20px;
+}
+
+.editor-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.cta {
+  border: none;
+  border-radius: 8px;
+  padding: 12px 28px;
+  background: var(--color-gold);
+  color: var(--color-header-bg);
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.cta:hover:not(:disabled) {
+  background: var(--color-gold-light);
+}
+
+.cta:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

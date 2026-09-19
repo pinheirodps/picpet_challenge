@@ -1,0 +1,252 @@
+.hero {
+  background: linear-gradient(135deg, var(--color-header-bg), var(--color-header-bg-2));
+  color: var(--color-text-on-dark);
+  text-align: center;
+  padding: 56px 24px 48px;
+}
+
+.hero__title {
+  font-size: 2.5rem;
+  color: var(--color-gold-light);
+  text-wrap: balance;
+}
+
+.hero__subtitle {
+  max-width: 620px;
+  margin: 16px auto 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #d8c9b8;
+}
+
+.hero__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  padding: 6px 18px;
+  border: 1px solid rgba(212, 164, 76, 0.4);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: var(--color-gold-light);
+}
+
+.continue {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 28px 24px 0;
+}
+
+.continue__title {
+  font-size: 1.1rem;
+  color: var(--color-text);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.continue__count {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.continue__list {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.continue__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  border-radius: 10px;
+  padding: 10px 16px;
+  box-shadow: var(--shadow-card);
+}
+
+.continue__item:hover {
+  border-color: var(--color-gold);
+}
+
+.continue__book {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--color-text);
+}
+
+.continue__health {
+  font-size: 0.8rem;
+  color: var(--color-easy);
+  font-weight: 600;
+}
+
+.continue__toggle {
+  margin-top: 10px;
+  border: none;
+  background: none;
+  padding: 4px 0;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-medium);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.continue__toggle:hover {
+  color: var(--color-text);
+}
+
+.library {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 40px 24px 64px;
+}
+
+.library__title {
+  text-align: center;
+  font-size: 1.6rem;
+}
+
+.library__subtitle {
+  text-align: center;
+  max-width: 560px;
+  margin: 10px auto 28px;
+  color: var(--color-text-muted);
+  font-size: 0.92rem;
+}
+
+.library__search {
+  max-width: 420px;
+  margin: 0 auto 18px;
+}
+
+.library__search input {
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 0.9rem;
+}
+
+.library__search input:focus {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 1px;
+}
+
+.library__filters {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+}
+
+.library__filters-label {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-right: 4px;
+}
+
+.filter-pill {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.filter-pill--active {
+  background: var(--color-gold);
+  border-color: var(--color-gold);
+  color: var(--color-header-bg);
+  font-weight: 600;
+}
+
+.library__status {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 40px 0;
+}
+
+.library__status--error {
+  color: var(--color-hard);
+}
+
+.library__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.pagination__step {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 0.82rem;
+  color: var(--color-text);
+}
+
+.pagination__step:hover:not(:disabled) {
+  border-color: var(--color-gold);
+}
+
+.pagination__step:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pagination__status {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.library__add {
+  display: flex;
+  justify-content: center;
+  margin-top: 32px;
+}
+
+.add-adventure {
+  border: 1px dashed var(--color-gold);
+  background: none;
+  color: var(--color-text);
+  border-radius: 999px;
+  padding: 10px 22px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.add-adventure:hover {
+  background: color-mix(in srgb, var(--color-gold) 12%, transparent);
+}
+
+@media (max-width: 480px) {
+  .hero {
+    padding: 40px 16px 32px;
+  }
+
+  .hero__title {
+    font-size: 1.9rem;
+  }
+}

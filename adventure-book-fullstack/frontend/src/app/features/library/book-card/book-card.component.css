@@ -1,0 +1,82 @@
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.card__title {
+  font-size: 1.15rem;
+  color: var(--color-text);
+}
+
+.card__author {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.card__badges {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.card__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.76rem;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.badge--easy {
+  color: var(--color-easy);
+  background: var(--color-easy-bg);
+}
+
+.badge--medium {
+  color: var(--color-medium);
+  background: var(--color-medium-bg);
+}
+
+.badge--hard {
+  color: var(--color-hard);
+  background: var(--color-hard-bg);
+}
+
+.card__cta {
+  margin-top: auto;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  background: var(--color-gold);
+  color: var(--color-header-bg);
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background-color 0.15s ease;
+}
+
+.card__cta:hover {
+  background: var(--color-gold-light);
+}
