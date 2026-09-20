@@ -201,8 +201,25 @@ separate entity.
 
 What was added: `GET /api/games` listing resumable games, and a "Continue Playing" area.
 
-The header's save button confirms that progress is already kept rather than performing a
-save. The stop button, by contrast, *is* a real state change and does call the API.
+### The header, and why it has three controls
+
+The brief asks for *"a header allowing the user to stop/pause the game, view the current book
+name, their life, and save their progression"*. The name and the life are displayed; the rest are four controls:
+
+| Control | What it does |
+| :-- | :-- |
+| ← Back to Library | Leaves straight away; the game keeps its place. |
+| 💾 Save Progress | Confirms progress is kept, and stays in the game. Sends no request. |
+| ⏸ Pause | Both at once — confirms the save, then steps out. |
+| ⏹ Stop | Ends the adventure for good, and asks first. |
+
+> **If asked why there's a Stop when Figure 1 doesn't show one:** the brief's text asks for it
+> ("stop/pause the game") even though the mockup omits it, along with the life display it also
+> asks for. The text was treated as the requirement and the figure as a sketch.
+
+> **And why Stop is separate from Pause:** "stop/pause" can mean step away or give up. Pause
+> covers the first; Stop covers the second and can't be undone, which is why it's the one that
+> asks for confirmation.
 
 > **If asked "where's the save endpoint?"** There isn't one, deliberately. Adding a separate
 > save action would mean progress could be lost by not pressing it. The reader can close the
@@ -306,8 +323,8 @@ assert the loaded form was valid, before any manual testing found it.
 | Suite | Count | What it covers |
 | :-- | :-- | :-- |
 | Backend | 100 | Unit, slice, and one full-application integration test |
-| Frontend unit | 73 | Components and services, Karma + Jasmine |
-| Playwright E2E | 39 | Real browser against the real API, no mocks |
+| Frontend unit | 76 | Components and services, Karma + Jasmine |
+| Playwright E2E | 43 | Real browser against the real API, no mocks |
 | Cucumber BDD | 31 scenarios | The same rules in plain English, separate project |
 
 **The full-application test is the one to mention.** Everything else mocks at least one seam.

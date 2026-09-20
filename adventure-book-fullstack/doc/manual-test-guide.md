@@ -172,8 +172,31 @@ application reports that you reached an ending rather than claiming a victory it
 
 ## 7. Saving, resuming and stopping (Objective 4)
 
-Start a fresh game of **Dragon Quest** and make two choices, noting the section text and your
-health. Then click **Back to library** in the header.
+The brief asks the header to let the reader **stop or pause** the game, see the **book name**
+and their **life**, and **save their progression**. Start a game and check it's all there:
+
+| Check | Expected |
+| :-- | :-- |
+| Book name | Shown in the middle |
+| Life | e.g. "♥ 10 / 10" |
+| Four controls | ← Back to Library, 💾 Save Progress, ⏸ Pause, ⏹ Stop |
+
+Now make two choices in **Dragon Quest**, noting the section text and your health. Press
+**💾 Save Progress**.
+
+| Check | Expected |
+| :-- | :-- |
+| The button | Shows "Saved ✓" for a moment |
+| Where you are | **Still in the game** — saving doesn't take you anywhere |
+
+Press **⏸ Pause**.
+
+| Check | Expected |
+| :-- | :-- |
+| The button | Confirms "Saved ✓" |
+| Then | Takes you out to the library |
+
+Resume the game, make another choice, and this time click **← Back to Library**.
 
 | Check | Expected |
 | :-- | :-- |
@@ -187,10 +210,14 @@ Click it to resume.
 | The section | Exactly where you stopped — same text |
 | Health | Exactly what you had |
 
-**There is no "save" step, and that is deliberate.** Every choice is written to the database
-as you make it, so a saved game is just one still in progress. The header's save button
-confirms that rather than performing it — pressing it should tell you your progress is already
-kept.
+**There is no save request, and that is deliberate.** Every choice is written to the database
+as you make it, so a saved game is just one still in progress. Save Progress and Pause
+acknowledge that rather than performing it — which is why leaving without pressing either
+loses nothing.
+
+The four controls differ in what they do next: Save stays, Pause confirms and leaves, Back to
+Library leaves straight away, and Stop ends the adventure. Only the last can't be undone,
+which is why only it asks first.
 
 ### Pressing "Begin Quest" again on the same book
 

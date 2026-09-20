@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of, throwError, Subject } from 'rxjs';
 import { GameService } from '../../../core/services/game.service';
@@ -152,11 +152,12 @@ describe('GamePageComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('The End');
   });
 
-  it('stops the game through the API when the stop control is used', () => {
+  it('stops the game through the API once the reader confirms', () => {
     setUp({ bookId: '1' });
     gameService.start.and.returnValue(of(playingSession()));
     gameService.stop.and.returnValue(of(playingSession({ status: 'ABANDONED', options: [] })));
     fixture.detectChanges();
+    spyOn(window, 'confirm').and.returnValue(true);
 
     component.stopGame();
     fixture.detectChanges();
@@ -165,6 +166,58 @@ describe('GamePageComponent', () => {
     expect(component.session()?.status).toBe('ABANDONED');
     expect(fixture.nativeElement.textContent).toContain('Adventure Stopped');
   });
+
+  // Stopping can't be undone — Save & Exit is the way to step away and come back — so a
+  // refused confirmation must leave the game exactly as it was.
+  it('leaves the game running when the reader declines to stop', () => {
+    setUp({ bookId: '1' });
+    gameService.start.and.returnValue(of(playingSession()));
+    fixture.detectChanges();
+    spyOn(window, 'confirm').and.returnValue(false);
+
+    component.stopGame();
+
+    expect(gameService.stop).not.toHaveBeenCalled();
+    expect(component.session()?.status).toBe('PLAYING');
+  });
+
+  // Saving sends no request — the last choice already persisted the session — and it does not
+  // leave the game either. Stepping away is what Back to Library is for.
+  it('acknowledges the save without leaving the game', fakeAsync(() => {
+    setUp({ bookId: '1' });
+    gameService.start.and.returnValue(of(playingSession()));
+    fixture.detectChanges();
+
+    component.saveProgress();
+    fixture.detectChanges();
+
+    expect(component.justSaved()).toBeTrue();
+    expect(fixture.nativeElement.textContent).toContain('Saved ✓');
+    expect(router.navigate).not.toHaveBeenCalled();
+
+    // The acknowledgement clears itself, leaving the reader where they were.
+    tick(2000);
+    fixture.detectChanges();
+    expect(component.justSaved()).toBeFalse();
+    expect(router.navigate).not.toHaveBeenCalled();
+  }));
+
+  // Pausing is saving and leaving in one step: it confirms first, so the reader is told their
+  // place is kept rather than being moved away the instant they click.
+  it('confirms the save before pausing out to the library', fakeAsync(() => {
+    setUp({ bookId: '1' });
+    gameService.start.and.returnValue(of(playingSession()));
+    fixture.detectChanges();
+
+    component.pauseGame();
+    fixture.detectChanges();
+
+    expect(component.justSaved()).toBeTrue();
+    expect(router.navigate).not.toHaveBeenCalled();
+
+    tick(1000);
+    expect(router.navigate).toHaveBeenCalledWith(['/']);
+  }));
 
   it('navigates home when going back to the library', () => {
     setUp({ bookId: '1' });

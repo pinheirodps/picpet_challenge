@@ -148,15 +148,12 @@ aplicação não consegue verificar.
 
 ```java
 currentSectionNumber = chosen.getGotoId();     // move primeiro
-
-if (health <= MIN_HEALTH) {
-    status = GameStatus.DEAD;
-} else if (currentSection().isEnding()) {
-    status = GameStatus.FINISHED;
-}
+settleOutcome();                               // e só depois decide o que isso significou
 ```
 
-Assim o ecrã mostra a sala onde o leitor morreu, não aquela de onde saiu.
+Assim o ecrã mostra a sala onde o leitor morreu, não aquela de onde saiu. O porquê de o
+`settleOutcome()` ser um `if/else` e não um Strategy está em
+[arquitetura-pt.md](arquitetura-pt.md).
 
 ### O texto da consequência
 
@@ -190,8 +187,25 @@ Playing".
 > progresso por não a carregar. O leitor pode fechar o separador a meio de uma frase e não
 > perde nada.
 
-O botão de guardar no cabeçalho **confirma** que o progresso já está guardado. O de parar, por
-contraste, é uma mudança de estado real e chama a API.
+### O cabeçalho, e porque tem três controlos
+
+O enunciado pede *"a header allowing the user to stop/pause the game, view the current book
+name, their life, and save their progression"*. O nome e a vida são mostrados; o resto são quatro botões, cada um com a sua intenção:
+
+| Controlo | O que faz |
+|:--|:--|
+| ← Back to Library | Sai já. O jogo guarda o lugar, como fechar o livro em cima da mesa. |
+| 💾 Save Progress | Confirma que o progresso está guardado, e **fica no jogo**. Não faz pedido nenhum. |
+| ⏸ Pause | Os dois juntos: confirma que ficou guardado e sai. |
+| ⏹ Stop | Termina a aventura de vez, e pergunta antes. |
+
+> **Se perguntarem porque há um Stop se a Figura 1 não o mostra:** o texto do enunciado pede
+> ("stop/pause the game"), mesmo que o mockup o omita — tal como omite a vida, que o texto
+> também pede. Tratei o texto como o requisito e a figura como um esboço.
+
+> **E porque o Stop é separado da pausa:** "stop/pause" tanto pode significar afastar-se como
+> desistir. A Pause cobre o primeiro; o Stop cobre o segundo, não tem retorno, e é por isso o
+> único que pede confirmação.
 
 ### Dois refinamentos que vieram de usar a aplicação
 
@@ -266,9 +280,9 @@ teste manual dar por isso.
 
 | Suíte | Nº | O que cobre |
 |:--|:--|:--|
-| Backend | 94 | Unitários, slice, e um de aplicação completa |
-| Frontend unitário | 67 | Componentes e serviços |
-| Playwright E2E | 39 | Browser real contra API real, sem mocks |
+| Backend | 100 | Unitários, slice, e um de aplicação completa |
+| Frontend unitário | 76 | Componentes e serviços |
+| Playwright E2E | 43 | Browser real contra API real, sem mocks |
 | Cucumber BDD | 31 cenários | As mesmas regras em inglês corrente, projeto à parte |
 
 **O teste de aplicação completa é o que vale a pena mencionar.** Tudo o resto simula pelo

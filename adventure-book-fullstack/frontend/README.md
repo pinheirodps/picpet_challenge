@@ -15,9 +15,9 @@ calls the API directly, and the backend allows that origin through CORS.
 
 ```bash
 npm run build          # production bundle into dist/
-npm test               # 73 unit tests (Karma + Jasmine)
+npm test               # 76 unit tests (Karma + Jasmine)
 npm run test:coverage  # the same, with a coverage report in coverage/
-npm run e2e            # 39 Playwright tests against the running app
+npm run e2e            # 43 Playwright tests against the running app
 npm run e2e:headed     # the same, with a visible browser
 ```
 

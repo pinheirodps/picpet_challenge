@@ -45,6 +45,7 @@
   color: var(--color-text);
 }
 
+
 .game-header__right {
   display: flex;
   align-items: center;
@@ -68,7 +69,10 @@
   background: var(--color-hard-bg);
 }
 
-.save-button {
+/* The three header actions share a shape; only their colour and hover differ. */
+.save-button,
+.pause-button,
+.stop-button {
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   border-radius: 8px;
@@ -78,17 +82,19 @@
   color: var(--color-text);
 }
 
-.save-button:hover {
+.save-button:disabled,
+.pause-button:disabled,
+.stop-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.save-button:hover,
+.pause-button:hover:not(:disabled) {
   border-color: var(--color-gold);
 }
 
 .stop-button {
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  border-radius: 8px;
-  padding: 6px 14px;
-  font-size: 0.82rem;
-  font-weight: 600;
   color: var(--color-hard);
 }
 

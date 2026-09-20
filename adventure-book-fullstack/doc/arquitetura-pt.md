@@ -69,11 +69,7 @@ public void choose(int optionIndex) {
 
     currentSectionNumber = chosen.getGotoId();
 
-    if (health <= MIN_HEALTH) {
-        status = GameStatus.DEAD;
-    } else if (currentSection().isEnding()) {
-        status = GameStatus.FINISHED;
-    }
+    settleOutcome();
     updatedAt = Instant.now();
 }
 ```
@@ -366,9 +362,9 @@ mapeia-os diretamente.
 
 | Suíte | Nº | O que cobre |
 |:--|:--|:--|
-| Backend | 94 | Unitários, slice, e um de aplicação completa |
-| Frontend unitário | 67 | Componentes e serviços (Karma + Jasmine) |
-| Playwright E2E | 39 | Browser real contra API real, sem mocks |
+| Backend | 100 | Unitários, slice, e um de aplicação completa |
+| Frontend unitário | 76 | Componentes e serviços (Karma + Jasmine) |
+| Playwright E2E | 43 | Browser real contra API real, sem mocks |
 | Cucumber BDD | 31 cenários | As mesmas regras em inglês corrente, projeto à parte |
 
 **O teste de aplicação completa é o que vale a pena mencionar.** Tudo o resto simula pelo

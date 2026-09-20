@@ -38,6 +38,8 @@ async function stopAnyGameOf(page: Page, bookTitle: string) {
 
   while ((await resumeCard.count()) > 0) {
     await resumeCard.first().click();
+    // Stopping asks before it ends the game; this is cleanup, not the thing under test.
+    page.once('dialog', (dialog) => dialog.accept());
     await page.getByRole('button', { name: /Stop/ }).click();
     await expect(page.getByRole('heading', { name: 'Adventure Stopped' })).toBeVisible();
     await page.getByRole('button', { name: /Return to the Library/ }).click();
@@ -116,8 +118,50 @@ test.describe('Playing a book', () => {
     await choose(page, /Enter the hidden passage/);
 
     await expect(page.locator('.option')).toHaveCount(0);
+    // An ended game has nothing left to save, pause or stop.
     await expect(page.getByRole('button', { name: /Save Progress/ })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /Pause/ })).toHaveCount(0);
     await expect(page.getByRole('button', { name: /Stop/ })).toHaveCount(0);
+    // The way back to the library is still there.
+    await expect(page.getByRole('button', { name: /Back to Library/ })).toBeVisible();
+  });
+
+  // The brief asks the header to let the reader "stop/pause the game", show the book name and
+  // their life, and save their progression.
+  test('the header carries everything the brief asks for', async ({ page }) => {
+    await startCrystalCaverns(page);
+
+    await expect(page.getByText('The Crystal Caverns')).toBeVisible();
+    await expect(page.getByLabel(/Health: 10 of 10/)).toBeVisible();
+    await expect(page.getByRole('button', { name: /Back to Library/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Save Progress/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Pause/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Stop/ })).toBeVisible();
+  });
+
+  test('saving acknowledges without leaving the game', async ({ page }) => {
+    await startCrystalCaverns(page);
+
+    await page.getByRole('button', { name: /Save Progress/ }).click();
+
+    await expect(page.getByRole('button', { name: /Saved/ })).toBeVisible();
+    // Still playing — saving is not leaving.
+    await expect(page.locator('.option').first()).toBeVisible();
+  });
+
+  test('pausing leaves the game and keeps it resumable', async ({ page }) => {
+    await startCrystalCaverns(page);
+    await choose(page, /Cross the rope bridge/);
+    await expect(page.getByText(/The bridge creaks under your weight/)).toBeVisible();
+
+    await page.getByRole('button', { name: /Pause/ }).click();
+
+    await expect(page.getByRole('heading', { name: /Adventure Awaits/ })).toBeVisible();
+    const resumed = page.locator('.continue__item').filter({ hasText: 'The Crystal Caverns' });
+    await expect(resumed).toHaveCount(1);
+
+    await resumed.click();
+    await expect(page.getByText(/The bridge creaks under your weight/)).toBeVisible();
   });
 
   test('health shows as low once it is down to three', async ({ page }) => {
@@ -128,12 +172,15 @@ test.describe('Playing a book', () => {
     await expect(page.locator('.health--low')).toBeVisible();
   });
 
-  test('returns to the library from the header', async ({ page }) => {
+  test('leaves the game from the header, keeping it resumable', async ({ page }) => {
     await startCrystalCaverns(page);
 
     await page.getByRole('button', { name: /Back to Library/ }).click();
 
     await expect(page.getByRole('heading', { name: /Adventure Awaits/ })).toBeVisible();
+    await expect(
+      page.locator('.continue__item').filter({ hasText: 'The Crystal Caverns' })
+    ).toHaveCount(1);
   });
 });
 

@@ -206,10 +206,10 @@ administrador.
 | Suíte | Nº | Estado |
 |:--|:--|:--|
 | Backend | 100 | ✅ |
-| Frontend unitário | 73 | ✅ |
-| Playwright E2E | 39 | ✅ |
+| Frontend unitário | 76 | ✅ |
+| Playwright E2E | 43 | ✅ |
 | Cucumber BDD | 31 cenários / 140 steps | ✅ |
-| **Total** | **243** | |
+| **Total** | **250** | |
 
 ### Cobertura medida
 

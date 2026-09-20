@@ -23,8 +23,11 @@
       </div>
 
       @if (game.status === 'PLAYING') {
-        <button type="button" class="save-button" (click)="confirmSave()">
+        <button type="button" class="save-button" (click)="saveProgress()">
           {{ justSaved() ? 'Saved ✓' : '💾 Save Progress' }}
+        </button>
+        <button type="button" class="pause-button" [disabled]="busy()" (click)="pauseGame()">
+          ⏸ Pause
         </button>
         <button type="button" class="stop-button" [disabled]="busy()" (click)="stopGame()">
           ⏹ Stop

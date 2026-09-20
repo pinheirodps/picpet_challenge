@@ -35,6 +35,8 @@ async function stopAnyGameOf(page: Page, bookTitle: string) {
 
   while ((await resumeCard.count()) > 0) {
     await resumeCard.first().click();
+    // Stopping asks before it ends the game; this is cleanup, not the thing under test.
+    page.once('dialog', (dialog) => dialog.accept());
     await page.getByRole('button', { name: /Stop/ }).click();
     await expect(page.getByRole('heading', { name: 'Adventure Stopped' })).toBeVisible();
     await page.getByRole('button', { name: /Return to the Library/ }).click();
@@ -80,12 +82,25 @@ test.describe('Saving and resuming', () => {
     await expect(page.getByLabel(/Health: 3 of 10/)).toBeVisible();
   });
 
-  test('the save button confirms what the backend already did', async ({ page }) => {
+  // Leaving mid-game is the pause: the game stays resumable under Continue Playing. Saving
+  // is a separate control that acknowledges progress without leaving.
+  test('leaving mid-game keeps it resumable', async ({ page }) => {
     await beginQuest(page, 'Dragon Quest');
+    await page.getByRole('button', { name: /Climb the exposed cliff path/ }).click();
+    await expect(page.getByText(/The cliff path is steep/)).toBeVisible();
 
-    await page.getByRole('button', { name: /Save Progress/ }).click();
+    await page.getByRole('button', { name: /Back to Library/ }).click();
 
-    await expect(page.getByRole('button', { name: /Saved/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Adventure Awaits/ })).toBeVisible();
+    const resumeCard = page.locator('.continue__item').filter({ hasText: 'Dragon Quest' });
+    await expect(resumeCard).toHaveCount(1);
+
+    // And it really does resume where it was left.
+    await resumeCard.click();
+    await expect(page.getByText(/The cliff path is steep/)).toBeVisible();
+
+    page.once('dialog', (dialog) => dialog.accept());
+    await page.getByRole('button', { name: /Stop/ }).click();
   });
 
   // Pressing "Begin Quest" on a book already part-way through used to start a second game,
@@ -115,16 +130,35 @@ test.describe('Saving and resuming', () => {
     // Leave no game behind: the specs share a database, and a lingering one would show up in
     // another test's Continue Playing list.
     await caverns.click();
+    page.once('dialog', (dialog) => dialog.accept());
     await page.getByRole('button', { name: /Stop/ }).click();
     await expect(page.getByRole('heading', { name: 'Adventure Stopped' })).toBeVisible();
   });
 });
 
 test.describe('Stopping a game', () => {
+  // Stop is the deliberate end, not the pause — leaving via Back to Library is the pause.
+  // Because a stopped game can't be resumed, it asks first.
+  test('stopping asks before it ends the adventure, and keeps it when refused', async ({ page }) => {
+    await beginQuest(page, 'Pirates of the Jade Sea');
+    await expect(page.getByText(/The salty breeze carries the cries of distant gulls/)).toBeVisible();
+
+    page.once('dialog', (dialog) => {
+      expect(dialog.message()).toMatch(/not be able to resume/i);
+      return dialog.dismiss();
+    });
+    await page.getByRole('button', { name: /Stop/ }).click();
+
+    // Refused: still playable.
+    await expect(page.getByRole('heading', { name: 'Adventure Stopped' })).toHaveCount(0);
+    await expect(page.locator('.option').first()).toBeVisible();
+  });
+
   test('stopping ends the adventure and removes it from Continue Playing', async ({ page }) => {
     await beginQuest(page, 'Pirates of the Jade Sea');
     await expect(page.getByText(/The salty breeze carries the cries of distant gulls/)).toBeVisible();
 
+    page.once('dialog', (dialog) => dialog.accept());
     await page.getByRole('button', { name: /Stop/ }).click();
 
     await expect(page.getByRole('heading', { name: 'Adventure Stopped' })).toBeVisible();

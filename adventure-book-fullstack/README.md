@@ -44,8 +44,8 @@ exactly that origin; override with `APP_CORS_ALLOWED_ORIGINS` if you serve it el
 
 ```bash
 cd backend  && mvn test       # 100 tests: unit, slice and one full-application integration test
-cd frontend && npm test       # 73 unit tests (Karma + Jasmine)
-cd frontend && npm run e2e    # 39 end-to-end tests (Playwright), both servers must be running
+cd frontend && npm test       # 76 unit tests (Karma + Jasmine)
+cd frontend && npm run e2e    # 43 end-to-end tests (Playwright), both servers must be running
 ```
 
 `mvn test` also writes a JaCoCo report to `backend/target/site/jacoco/index.html` (94% of
@@ -183,8 +183,21 @@ collection. That mistake was made and caught during development; both repositori
 it so it isn't repeated.
 
 **"Saving" isn't a separate operation.** Every choice writes the session, so a saved game is
-simply one that's still `PLAYING`. The header's save button confirms that rather than
-performing it; the stop button is a real state change and does call the API.
+simply one that's still `PLAYING`.
+
+The brief asks for *"a header allowing the user to stop/pause the game, view the current book
+name, their life, and save their progression"*. The name and the life are displayed; the rest
+are four controls, each with its own intent:
+
+| Control | What it does |
+| :-- | :-- |
+| **← Back to Library** | Leaves straight away. The game keeps its place, like closing a book on the table. |
+| **💾 Save Progress** | Acknowledges that progress is kept, and stays in the game. Sends no request — the last choice already persisted the session. |
+| **⏸ Pause** | Both at once: confirms the game is saved, then steps out. |
+| **⏹ Stop** | Ends the adventure for good. The session keeps its history but stops being resumable, so it asks first. |
+
+The distinction that matters is the last one: a reader stepping away expects to come back, so
+the only control that can't be undone is the one that asks first.
 
 ---
 
