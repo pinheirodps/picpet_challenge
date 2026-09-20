@@ -38,3 +38,7 @@ doc/report.pdf
 
 # Claude Code local state
 .claude/
+
+# Personal preparation notes — kept locally, not part of the submission
+doc/
+adventure-book-fullstack/doc/
