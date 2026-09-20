@@ -228,6 +228,39 @@ Now press the header's **stop** control.
 Stopping is a real state change, not just navigation: a stopped game keeps its progress but is
 no longer offered as resumable.
 
+### Each reader sees only their own games
+
+Start a game on any book, then open the app in a **private window** (or a different browser).
+
+| Check | Expected |
+| :-- | :-- |
+| The private window's library | **No** Continue Playing section — that reader has no games |
+| Start a game there | It appears only in that window |
+| Back in the first window | Still only the game you started there |
+
+Saved games belong to a reader. The browser generates an id on first visit and keeps it in
+local storage, sending it with every request; the backend stores it on the session and filters
+the resume list by it.
+
+**Say this before anyone asks:** it identifies a reader, it does not authenticate one. The id
+is readable and forgeable, and the same person on another device is a different reader. It
+exists so two visitors don't share one list, not to protect anything.
+
+### Two choices at once can't lose a turn
+
+Harder to trigger by hand, but worth knowing the behaviour. Open the same game in two tabs,
+note the health, then click a costly option in both as fast as you can.
+
+| Check | Expected |
+| :-- | :-- |
+| One tab | Applies the choice normally |
+| The other | Says the game changed elsewhere and to reload — it does not silently apply a second time |
+| The health | Reflects one choice, not two, and never a turn that vanished |
+
+Each choice reads the game, changes it and writes it back. Without a guard, both tabs would
+read the same health, both subtract, and the second write would overwrite the first — one of
+the two turns would disappear. A version column makes the losing write fail instead.
+
 ---
 
 ## 8. Adding a book, and the validation rules (Objective 5)
@@ -430,6 +463,8 @@ Every check above behaves as described, and in particular:
 - Every validation rule is enforced, and a bad book is told everything that's wrong with it.
 - A book can be corrected after publishing, and a revision is held to the same rules.
 - Nothing destructive happens without being asked first, and the question says what it costs.
+- One reader's saved games are their own, not everyone's.
+- A turn can't be lost to two choices racing each other.
 
 If something doesn't match, note the step number — each maps to an automated test, so the
 matching spec in `backend/src/test/`, `frontend/src/app/**/*.spec.ts` or `frontend/e2e/` is
