@@ -20,7 +20,6 @@ to install.
 8. [Tests](#8-tests)
 9. [Notes on the sample data](#9-notes-on-the-sample-data)
 10. [Known limitations](#10-known-limitations)
-11. [A five-minute walkthrough](#11-a-five-minute-walkthrough)
 
 ---
 
@@ -372,17 +371,17 @@ Every one of these has a regression test; none was only patched.
 | Games shared between readers | One visitor's list showed another's game | Sessions had no owner |
 | Racing choices lost a turn | Health inconsistent with the choices made | No optimistic locking |
 
-Two are worth telling in full:
+Two shaped the code that followed:
 
-**The cross product.** `distinct` on the root entity does *not* dedupe a nested collection.
-This is the kind of bug that looks like a data problem — a 12-section book returning 21
-sections — and the same mistake existed in a second repository, found by deliberately looking
-for the pattern once it was understood.
+**The cross product.** `distinct` on the root entity does *not* dedupe a nested collection,
+which presents as a data problem — a 12-section book returning 21 sections. The same mistake
+existed in a second repository, found by deliberately looking for the pattern once it was
+understood. Both repositories now document it, and an integration test guards each.
 
 **The dead search, which the unit tests passed.** They mocked the service and asserted it was
-called, which stays true even when the pipeline is dead after its first use. The end-to-end
-test that now guards it types three different searches in a row. The lesson: a test that
-asserts a call happened doesn't prove the thing still works the second time.
+called, which stays true even when the pipeline is dead after its first use. A test that
+asserts a call happened doesn't prove the thing still works the second time, so the
+end-to-end test that now guards it types three different searches in a row.
 
 ---
 
@@ -397,7 +396,7 @@ asserts a call happened doesn't prove the thing still works the second time.
 Backend coverage is 94% of lines — 100% on `validation`, 99% on `domain`, which is where a bug
 would be a business-rule bug.
 
-**The full-application test is the one worth pointing at.** Everything else mocks at least one
+**The full-application test is the one that matters most.** Everything else mocks at least one
 seam; `ApplicationIntegrationTest` runs the real context, real seed loading, real validation
 wiring and real HTTP, so it catches a book that stops loading or a rule Spring doesn't pick up.
 
@@ -441,52 +440,6 @@ books actually carry, plus a chapter count derived from the section count.
 - **Deleting a book destroys the games played on it.** A saved position means nothing without
   the sections it refers to, so there is nothing sensible to keep — but it does make a delete
   final, which is why it asks first.
-
----
-
-## 11. A five-minute walkthrough
-
-Start from a clean library: stop the backend, delete `backend/data/`, start it again. Running
-the end-to-end suite leaves published books behind, and a shelf full of
-`The Whispering Woods 1789822718297` undercuts the demonstration.
-
-**1 — The library.** Search `Ashfell`: it matches the *author*, not just titles. Type quickly
-and watch the network — one request goes out, not one per keystroke.
-
-**2 — Playing, and dying.** Begin *The Crystal Caverns* and take this path:
-
-| Choice | What to point at |
-| :-- | :-- |
-| Cross the rope bridge | No consequence; health stays at 10 |
-| Try to jump to the other side | −7, and the banner explains *why*: "You land hard and twist your ankle." |
-| Continue deeper into the cavern | The banner clears — a harmless choice doesn't leave a stale explanation |
-| Swim across | −5 → 0. Death, with its cause named |
-
-One honest caveat, worth saying before anyone spots it: the section you die in reads
-*"shivering but alive"*. That is the sample book's own writing — it assumed you would arrive
-with health to spare — not a bug in the status.
-
-**3 — Saving, without a save button.** Back to the library: the game is under Continue
-Playing. Resume it — same section, same health. No save request was ever made.
-
-**4 — Managing the library.** Open *Manage Library*, edit a book, and show every field comes
-back filled in. Then break it — change the END section to a NODE — and show the backend
-refusing with its reason, on the same rules a new book faces.
-
-**5 — The API.** `/swagger-ui.html`: every endpoint, with its error shapes.
-
-### Questions worth having an answer ready for
-
-| If they ask | The short answer |
-| :-- | :-- |
-| Why JPA and not the JSON files? | The queries the app makes are relational; input format ≠ storage model |
-| Why is the game logic on the entity? | Information Expert — and it makes 14 tests run with no Spring |
-| Where is the save endpoint? | There isn't one; every choice persists, so nothing can be lost by not pressing save |
-| Why `FINISHED` and not `WON`? | An END section can be a bad ending; the app can't verify a victory |
-| Why a Stop button when Figure 1 has none? | The brief's text asks for it — and for the life display the figure also omits |
-| Why no Strategy for the end-of-turn branch? | Two fixed outcomes with a precedence; an interface would hide the order in a list |
-| Why no cache? | It was removed: caching a managed entity graph with `open-in-view: false` is how `LazyInitializationException` happens |
-| Is it safe for two users? | They can play simultaneously without interference, but the `playerId` identifies rather than authenticates — say so plainly |
 
 ---
 
