@@ -25,46 +25,60 @@ to install.
 
 ## 1. Running it
 
-You need **Java 21**, **Maven 3.8+** and **Node 20+**. The two halves run in separate
-terminals.
+**A JDK 21 is the only thing you need installed.** The backend carries the Maven wrapper, so
+`./mvnw` downloads the Maven it wants; nothing else has to be on the PATH.
 
-### Backend
+### Everything at once
 
 ```bash
 cd backend
-mvn spring-boot:run
+./mvnw -Pfullstack spring-boot:run
 ```
 
-Serves on **http://localhost:8080**. On first start it creates `backend/data/` (an H2 file
-database) and loads the four sample books from `src/main/resources/books/`. On later starts it
-finds them already there and skips loading.
+Open **http://localhost:8080** — the Angular application and the API on one port, one command.
+The `fullstack` profile downloads its own Node, builds the frontend, and packages the bundle
+inside the jar, so this needs no Node installation either.
+
+The first run takes several minutes: it fetches Maven, Node, and every npm dependency. After
+that they are cached.
+
+It installs with `npm ci`, so `package-lock.json` has to stay in step with `package.json` —
+which also means this build catches a lock file that has drifted, where `npm start` would not.
+
+### Or the two halves separately
+
+Better for development — `ng serve` gives the frontend hot reload, which a bundle baked into a
+jar cannot. Needs **Node 20+** as well as the JDK.
+
+```bash
+cd backend  && ./mvnw spring-boot:run    # http://localhost:8080
+cd frontend && npm install && npm start  # http://localhost:4200
+```
+
+The frontend calls the backend on 8080; CORS is configured for exactly that origin (override
+with `APP_CORS_ALLOWED_ORIGINS`).
+
+### Either way
+
+On first start the backend creates `backend/data/` (an H2 file database) and loads the four
+sample books from `src/main/resources/books/`. On later starts it finds them already there and
+skips loading.
 
 - API docs (Swagger UI): **http://localhost:8080/swagger-ui.html**
 - To start from a clean library: stop the app and delete `backend/data/`.
-- H2 web console, for looking at the data directly:
-  `mvn spring-boot:run -Dspring-boot.run.profiles=dev` → http://localhost:8080/h2-console
-  (JDBC URL `jdbc:h2:file:./data/adventure-book`, user `sa`, empty password).
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm start
-```
-
-Serves on **http://localhost:4200** and calls the backend on 8080. CORS is configured for
-exactly that origin; override with `APP_CORS_ALLOWED_ORIGINS` to serve it elsewhere.
+- H2 web console: `./mvnw spring-boot:run -Dspring-boot.run.profiles=dev` →
+  http://localhost:8080/h2-console (JDBC URL `jdbc:h2:file:./data/adventure-book`, user `sa`,
+  empty password).
 
 ### Tests
 
 ```bash
-cd backend  && mvn test       # 100 tests: unit, slice, and one full-application test
-cd frontend && npm test       # 76 unit tests (Karma + Jasmine)
-cd frontend && npm run e2e    # 43 end-to-end tests (Playwright), both servers must be running
+cd backend  && ./mvnw test     # 100 tests: unit, slice, and one full-application test
+cd frontend && npm test        # 76 unit tests (Karma + Jasmine)
+cd frontend && npm run e2e     # 43 end-to-end tests (Playwright), both servers must be running
 ```
 
-`mvn test` also writes a JaCoCo report to `backend/target/site/jacoco/index.html`.
+`./mvnw test` also writes a JaCoCo report to `backend/target/site/jacoco/index.html`.
 
 If Karma can't find a browser: `CHROME_BIN="/path/to/chrome.exe" npm test`. Playwright uses
 the machine's installed Edge, so `npx playwright install` isn't needed.
@@ -321,6 +335,8 @@ Playing with no way to tell them apart.
 | `@Version` (optimistic) | Pessimistic locking | Conflicts are rare; locking every read costs every request |
 | Browser-generated `playerId` | Full authentication | Separates readers without inventing a user model |
 | JPA + H2 | JSON files / NoSQL | The queries the app makes are relational |
+| Maven wrapper | Assume Maven is installed | A JDK is the only prerequisite; the build pins its own Maven version |
+| Frontend build behind a profile | Always build it | Minutes and a network connection on every backend build, for a bundle no backend developer needs |
 
 ### The cross product, in detail
 
@@ -451,8 +467,8 @@ the game rules that breaks a scenario fails that build. It was a separate exerci
 part of this submission; the backend's own 100 tests stand on their own.
 
 ```bash
-cd backend && mvn install -DskipTests     # the suite compiles against this jar
-cd ../../adventure-book-bdd && mvn test
+cd backend && ./mvnw install -DskipTests   # the suite compiles against this jar
+cd ../../adventure-book-bdd && mvn test    # this project has no wrapper of its own
 ```
 
 That dependency is why `spring-boot-maven-plugin` gives its executable jar the `exec`

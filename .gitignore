@@ -6,6 +6,9 @@ dist/
 # Dependencies
 node_modules/
 
+# Node downloaded by frontend-maven-plugin under the -Pfullstack profile
+**/frontend/node/
+
 # Database files
 data/
 *.mv.db
@@ -42,3 +45,6 @@ doc/report.pdf
 # Personal preparation notes — kept locally, not part of the submission
 doc/
 adventure-book-fullstack/doc/
+
+# Scratch clones and other throwaway working copies
+tmp/

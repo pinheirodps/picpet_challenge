@@ -25,8 +25,18 @@ Playwright drives the machine's installed Edge, so there's no browser to downloa
 can't find a browser, set `CHROME_BIN` to a Chrome or Chromium executable.
 
 `npm run build` swaps `environment.ts` for `environment.prod.ts`, which points the API at a
-relative `/api` — that assumes the bundle is served behind the same host as the backend.
-Change that file if the two are deployed separately.
+relative `/api` — that assumes the bundle is served behind the same host as the backend, which
+is exactly what the `fullstack` profile does.
+
+## Built from Maven
+
+`./mvnw -Pfullstack package` in `../backend` runs this build and packages the result inside
+the jar, so the whole application serves from port 8080 with no Node installed — the plugin
+downloads its own into `node/`, which is gitignored.
+
+That path uses `npm ci`, so **`package-lock.json` has to stay in step with `package.json`**.
+If you add a dependency with `npm install --no-save`, or edit `package.json` by hand, the
+full-stack build fails where `npm start` would not have noticed.
 
 ## Layout
 

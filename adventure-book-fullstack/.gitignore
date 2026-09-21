@@ -6,6 +6,9 @@ dist/
 # Dependencies
 node_modules/
 
+# Node downloaded by frontend-maven-plugin under the -Pfullstack profile
+frontend/node/
+
 # Database files
 data/
 *.mv.db

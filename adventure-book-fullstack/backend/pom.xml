@@ -115,4 +115,95 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <!--
+      Builds the Angular application and packages it inside this jar, so the whole thing runs
+      from one command with nothing but a JDK installed:
+
+        ./mvnw -Pfullstack spring-boot:run     → http://localhost:8080
+
+      Off by default, because it costs minutes and a network connection on every build while
+      producing nothing a backend developer needs. Day to day the two halves run separately —
+      `ng serve` gives the frontend hot reload, which a bundle copied into a jar cannot.
+
+      frontend-maven-plugin downloads its own Node and npm into frontend/node/, so this does
+      not need either on the PATH. The output lands in the jar's static/ directory, which
+      Spring Boot serves from the application root.
+
+      It installs with `npm ci` rather than `npm install`, so the build is reproducible — and
+      so a package-lock.json that has drifted from package.json fails here rather than being
+      silently papered over. That is a feature, but it does mean a dependency added by hand
+      without regenerating the lock will break this profile while `npm start` carries on
+      working.
+    -->
+    <profile>
+      <id>fullstack</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.github.eirslett</groupId>
+            <artifactId>frontend-maven-plugin</artifactId>
+            <version>1.15.1</version>
+            <configuration>
+              <workingDirectory>../frontend</workingDirectory>
+              <installDirectory>../frontend</installDirectory>
+            </configuration>
+            <executions>
+              <execution>
+                <id>install-node-and-npm</id>
+                <goals>
+                  <goal>install-node-and-npm</goal>
+                </goals>
+                <configuration>
+                  <nodeVersion>v20.17.0</nodeVersion>
+                </configuration>
+              </execution>
+              <execution>
+                <id>npm-install</id>
+                <goals>
+                  <goal>npm</goal>
+                </goals>
+                <configuration>
+                  <arguments>ci</arguments>
+                </configuration>
+              </execution>
+              <execution>
+                <id>npm-build</id>
+                <goals>
+                  <goal>npm</goal>
+                </goals>
+                <configuration>
+                  <arguments>run build</arguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <!-- The built bundle becomes the jar's static content. -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-resources-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>copy-frontend-bundle</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration>
+                  <outputDirectory>${project.build.outputDirectory}/static</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>../frontend/dist/frontend/browser</directory>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
