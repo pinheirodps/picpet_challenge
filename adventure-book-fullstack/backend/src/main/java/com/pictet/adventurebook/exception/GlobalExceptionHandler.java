@@ -12,6 +12,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+
 import java.util.List;
 
 /**
@@ -24,8 +26,12 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    @ExceptionHandler({BookNotFoundException.class, GameSessionNotFoundException.class})
-    public ResponseEntity<ErrorResponse> handleNotFound(RuntimeException ex) {
+    @ExceptionHandler({
+        BookNotFoundException.class,
+        GameSessionNotFoundException.class,
+        NoResourceFoundException.class
+    })
+    public ResponseEntity<ErrorResponse> handleNotFound(Exception ex) {
         ErrorResponse body = ErrorResponse.of(HttpStatus.NOT_FOUND.value(), "Not Found", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }

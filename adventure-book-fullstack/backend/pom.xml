@@ -180,14 +180,22 @@
             </executions>
           </plugin>
 
-          <!-- The built bundle becomes the jar's static content. -->
+          <!--
+            The built bundle becomes the app's static content.
+
+            Bound to process-resources, not the more natural prepare-package: `spring-boot:run`
+            never reaches package (it stops after compiling), so binding this any later meant
+            the copy never ran and `./mvnw -Pfullstack spring-boot:run` served an API with no
+            frontend behind it. process-resources runs early enough for both `spring-boot:run`
+            and `package` to pick it up.
+          -->
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-resources-plugin</artifactId>
             <executions>
               <execution>
                 <id>copy-frontend-bundle</id>
-                <phase>prepare-package</phase>
+                <phase>process-resources</phase>
                 <goals>
                   <goal>copy-resources</goal>
                 </goals>
