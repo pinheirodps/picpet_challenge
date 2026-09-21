@@ -128,6 +128,13 @@ public class GameSession {
     }
 
     /**
+     * Convenience overload starting a session with a default player identity.
+     */
+    public static GameSession start(Book book) {
+        return start(book, "anonymous");
+    }
+
+    /**
      * Applies the consequence (if any) of the option at {@code optionIndex} in the current
      * section, then moves to the section it points to. Ends the game as {@link
      * GameStatus#DEAD} if health drops to zero, or as {@link GameStatus#FINISHED} if the
